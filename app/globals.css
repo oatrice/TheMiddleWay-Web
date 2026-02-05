@@ -1,0 +1,92 @@
+@import "tailwindcss";
+
+/* ===== Design System: Warm Modern Sanctuary ===== */
+
+:root {
+  /* Colors */
+  --color-ivory: #FCF9F6;
+  --color-sage: #8B9D83;
+  --color-slate: #2D3748;
+  --color-sand: #F3F0ED;
+  
+  /* Semantic colors */
+  --background: var(--color-ivory);
+  --foreground: var(--color-slate);
+  --surface: var(--color-sand);
+  --primary: var(--color-sage);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-primary: var(--primary);
+  
+  /* Custom colors */
+  --color-ivory: #FCF9F6;
+  --color-sage: #8B9D83;
+  --color-slate: #2D3748;
+  --color-sand: #F3F0ED;
+  
+  /* Custom radius */
+  --radius-pill: 40px;
+  --radius-card: 1rem;
+  
+  /* Typography */
+  --font-heading: var(--font-playfair);
+  --font-body: var(--font-inter);
+}
+
+/* Base styles */
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-body), system-ui, sans-serif;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading), Georgia, serif;
+  font-weight: 600;
+  color: var(--color-slate);
+}
+
+/* Utility classes */
+.bg-ivory { background-color: var(--color-ivory); }
+.bg-sage { background-color: var(--color-sage); }
+.bg-slate { background-color: var(--color-slate); }
+.bg-sand { background-color: var(--color-sand); }
+
+.text-ivory { color: var(--color-ivory); }
+.text-sage { color: var(--color-sage); }
+.text-slate { color: var(--color-slate); }
+.text-sand { color: var(--color-sand); }
+
+/* Custom radius classes */
+.rounded-pill { border-radius: var(--radius-pill); }
+.rounded-card { border-radius: var(--radius-card); }
+
+/* Mobile-first container */
+.container-mobile {
+  width: 100%;
+  max-width: 100%;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+  .container-mobile {
+    max-width: 640px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+/* Safe area padding for mobile navigation */
+.pb-safe {
+  padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+}
