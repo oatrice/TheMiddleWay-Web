@@ -1,4 +1,4 @@
-# The Middle Way 🧘
+# The Middle Way(Web Frontend) 🧘
 
 A mindfulness and learning application built with Next.js 14+ and TypeScript.
 

@@ -1,4 +1,4 @@
-# The Middle Way - Roadmap 🗺️
+# The Middle Way(Web Frontend) - Roadmap 🗺️
 
 แผนพัฒนาแอปพลิเคชัน "The Middle Way" สำหรับการเรียนรู้และ mindfulness
 
