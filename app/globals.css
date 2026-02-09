@@ -1,79 +1,77 @@
 @import "tailwindcss";
 
-/* ===== Design System: Warm Modern Sanctuary ===== */
+/* ===== Design System: Deep Cosmos ===== */
 
 :root {
-  /* Colors */
-  --color-ivory: #FCF9F6;
-  --color-sage: #8B9D83;
-  --color-slate: #2D3748;
-  --color-sand: #F3F0ED;
+  /* Core Colors */
+  --color-navy: #0A192F;
+  --color-amber: #F59E0B;
+  --color-ivory: #F8FAFC; /* Slightly cool white for better contrast on navy */
+  --color-slate-light: #94A3B8; /* Secondary text */
+  --color-slate-dark: #1E293B; /* Secondary background */
   
-  /* Semantic colors */
-  --background: var(--color-ivory);
-  --foreground: var(--color-slate);
-  --surface: var(--color-sand);
-  --primary: var(--color-sage);
+  /* Semantic tokens */
+  --background: var(--color-navy);
+  --foreground: var(--color-ivory);
+  --primary: var(--color-amber);
+  --surface: var(--color-slate-dark);
+  --success: #10B981;
+  --error: #EF4444;
 }
 
 @theme inline {
+  /* Colors */
+  --color-navy: var(--color-navy);
+  --color-amber: var(--color-amber);
+  --color-ivory: var(--color-ivory);
+  --color-slate-light: var(--color-slate-light);
+  --color-slate-dark: var(--color-slate-dark);
+  
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-surface: var(--surface);
   --color-primary: var(--primary);
+  --color-surface: var(--surface);
   
-  /* Custom colors */
-  --color-ivory: #FCF9F6;
-  --color-sage: #8B9D83;
-  --color-slate: #2D3748;
-  --color-sand: #F3F0ED;
-  
-  /* Custom radius */
-  --radius-pill: 40px;
-  --radius-card: 1rem;
+  /* Radius */
+  --radius-pill: 9999px;
+  --radius-card: 1.5rem;
   
   /* Typography */
-  --font-heading: var(--font-playfair);
+  --font-heading: var(--font-outfit);
   --font-body: var(--font-inter);
 }
 
 /* Base styles */
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
   font-family: var(--font-body), system-ui, sans-serif;
   min-height: 100vh;
   min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
 }
 
 /* Typography */
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-heading), Georgia, serif;
-  font-weight: 600;
-  color: var(--color-slate);
+  font-family: var(--font-heading), sans-serif;
+  font-weight: 700;
+  color: var(--foreground);
+  letter-spacing: -0.02em;
 }
 
-/* Utility classes */
-.bg-ivory { background-color: var(--color-ivory); }
-.bg-sage { background-color: var(--color-sage); }
-.bg-slate { background-color: var(--color-slate); }
-.bg-sand { background-color: var(--color-sand); }
-
+/* Utility classes mapping */
+.bg-navy { background-color: var(--color-navy); }
+.bg-amber { background-color: var(--color-amber); }
+.text-navy { color: var(--color-navy); }
+.text-amber { color: var(--color-amber); }
 .text-ivory { color: var(--color-ivory); }
-.text-sage { color: var(--color-sage); }
-.text-slate { color: var(--color-slate); }
-.text-sand { color: var(--color-sand); }
 
-/* Custom radius classes */
-.rounded-pill { border-radius: var(--radius-pill); }
-.rounded-card { border-radius: var(--radius-card); }
-
-/* Mobile-first container */
+/* Mobile container */
 .container-mobile {
   width: 100%;
   max-width: 100%;
-  padding-left: 1rem;
-  padding-right: 1rem;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
 }
 
 @media (min-width: 640px) {
@@ -81,12 +79,17 @@ h1, h2, h3, h4, h5, h6 {
     max-width: 640px;
     margin-left: auto;
     margin-right: auto;
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
   }
 }
 
-/* Safe area padding for mobile navigation */
+/* Safe area */
 .pb-safe {
   padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+}
+
+/* Glassmorphism utility */
+.glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }

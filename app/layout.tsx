@@ -1,10 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Playfair_Display, Inter } from "next/font/google";
+import { Outfit, Inter } from "next/font/google";
 import "./globals.css";
 import { MobileNavigation } from "@/components/layout/MobileNavigation";
 
-const playfair = Playfair_Display({
-  variable: "--font-playfair",
+const outfit = Outfit({
+  variable: "--font-outfit",
   subsets: ["latin"],
   display: "swap",
 });
@@ -35,7 +35,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${playfair.variable} ${inter.variable} antialiased bg-ivory text-slate`}
+        className={`${outfit.variable} ${inter.variable} antialiased bg-navy text-ivory`}
       >
         <main className="pb-safe min-h-screen">
           {children}
