@@ -3,6 +3,7 @@ import { Outfit, Inter } from "next/font/google";
 import "./globals.css";
 import { MobileNavigation } from "@/components/layout/MobileNavigation";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { ProgressProvider } from "@/components/ProgressProvider";
 
 const outfit = Outfit({
   variable: "--font-outfit",
@@ -38,12 +39,14 @@ export default function RootLayout({
       <body
         className={`${outfit.variable} ${inter.variable} antialiased`}
       >
-        <ThemeProvider>
-          <main className="pb-safe min-h-screen">
-            {children}
-          </main>
-          <MobileNavigation />
-        </ThemeProvider>
+        <ProgressProvider>
+          <ThemeProvider>
+            <main className="pb-safe min-h-screen">
+              {children}
+            </main>
+            <MobileNavigation />
+          </ThemeProvider>
+        </ProgressProvider>
       </body>
     </html>
   );
