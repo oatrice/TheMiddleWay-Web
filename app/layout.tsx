@@ -1,10 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Playfair_Display, Inter } from "next/font/google";
+import { Outfit, Inter } from "next/font/google";
 import "./globals.css";
 import { MobileNavigation } from "@/components/layout/MobileNavigation";
+import { ThemeProvider } from "@/components/ThemeProvider";
 
-const playfair = Playfair_Display({
-  variable: "--font-playfair",
+const outfit = Outfit({
+  variable: "--font-outfit",
   subsets: ["latin"],
   display: "swap",
 });
@@ -33,14 +34,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" data-theme="light" suppressHydrationWarning>
       <body
-        className={`${playfair.variable} ${inter.variable} antialiased bg-ivory text-slate`}
+        className={`${outfit.variable} ${inter.variable} antialiased`}
       >
-        <main className="pb-safe min-h-screen">
-          {children}
-        </main>
-        <MobileNavigation />
+        <ThemeProvider>
+          <main className="pb-safe min-h-screen">
+            {children}
+          </main>
+          <MobileNavigation />
+        </ThemeProvider>
       </body>
     </html>
   );

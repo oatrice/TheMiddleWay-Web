@@ -1,79 +1,129 @@
 @import "tailwindcss";
 
-/* ===== Design System: Warm Modern Sanctuary ===== */
+/* ===== Design System: Dual Theme ===== */
+/* Light: Bright Sky (ฟ้าสดใส) */
+/* Dark: Deep Cosmos (Navy/Amber) */
 
+/* --- Light Theme (Default) — Bright Sky --- */
 :root {
-  /* Colors */
-  --color-ivory: #FCF9F6;
-  --color-sage: #8B9D83;
-  --color-slate: #2D3748;
-  --color-sand: #F3F0ED;
-  
-  /* Semantic colors */
-  --background: var(--color-ivory);
-  --foreground: var(--color-slate);
-  --surface: var(--color-sand);
-  --primary: var(--color-sage);
+  /* Core Colors - Bright Sky */
+  --color-sky-white: #EFF6FF;
+  --color-bright-blue: #2563EB;
+  --color-sky-surface: #DBEAFE;
+  --color-deep-blue: #1E3A5F;
+  --color-blue-gray: #64748B;
+  --color-sky-border: #BFDBFE;
+
+  /* Core Colors - Deep Cosmos (always available) */
+  --color-navy: #0A192F;
+  --color-amber: #F59E0B;
+  --color-slate-dark: #1E293B;
+  --color-slate-light: #94A3B8;
+
+  /* Semantic tokens - Light Mode (Bright Sky) */
+  --background: var(--color-sky-white);
+  --foreground: var(--color-deep-blue);
+  --primary: var(--color-bright-blue);
+  --surface: var(--color-sky-surface);
+  --text-primary: var(--color-deep-blue);
+  --text-secondary: var(--color-blue-gray);
+  --border: var(--color-sky-border);
+  --success: #10B981;
+  --error: #EF4444;
+  --warning: #F59E0B;
+
+  /* Glassmorphism - Light */
+  --glass-bg: rgba(219, 234, 254, 0.5);
+  --glass-border: rgba(37, 99, 235, 0.1);
+  --glass-blur: 12px;
+
+  /* Nav */
+  --nav-bg: rgba(239, 246, 255, 0.92);
+  --nav-active: var(--color-bright-blue);
+  --nav-inactive: var(--color-blue-gray);
+}
+
+/* --- Dark Theme --- */
+[data-theme="dark"] {
+  --background: var(--color-navy);
+  --foreground: #F8FAFC;
+  --primary: var(--color-amber);
+  --surface: var(--color-slate-dark);
+  --text-primary: #F8FAFC;
+  --text-secondary: var(--color-slate-light);
+  --border: #334155;
+  --success: #10B981;
+  --error: #EF4444;
+  --warning: #F59E0B;
+
+  /* Glassmorphism - Dark */
+  --glass-bg: rgba(255, 255, 255, 0.05);
+  --glass-border: rgba(255, 255, 255, 0.05);
+  --glass-blur: 10px;
+
+  /* Nav */
+  --nav-bg: rgba(10, 25, 47, 0.9);
+  --nav-active: var(--color-amber);
+  --nav-inactive: rgba(148, 163, 184, 0.6);
 }
 
 @theme inline {
+  /* Colors */
+  --color-navy: var(--color-navy);
+  --color-amber: var(--color-amber);
+  --color-sky-white: var(--color-sky-white);
+  --color-bright-blue: var(--color-bright-blue);
+  --color-sky-surface: var(--color-sky-surface);
+  --color-slate-light: var(--color-slate-light);
+  --color-slate-dark: var(--color-slate-dark);
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-surface: var(--surface);
   --color-primary: var(--primary);
-  
-  /* Custom colors */
-  --color-ivory: #FCF9F6;
-  --color-sage: #8B9D83;
-  --color-slate: #2D3748;
-  --color-sand: #F3F0ED;
-  
-  /* Custom radius */
-  --radius-pill: 40px;
-  --radius-card: 1rem;
-  
+  --color-surface: var(--surface);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-border: var(--border);
+
+  /* Radius */
+  --radius-pill: 9999px;
+  --radius-card: 1.5rem;
+
   /* Typography */
-  --font-heading: var(--font-playfair);
+  --font-heading: var(--font-outfit);
   --font-body: var(--font-inter);
 }
 
 /* Base styles */
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
   font-family: var(--font-body), system-ui, sans-serif;
   min-height: 100vh;
   min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Typography */
-h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-heading), Georgia, serif;
-  font-weight: 600;
-  color: var(--color-slate);
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading), sans-serif;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
 }
 
-/* Utility classes */
-.bg-ivory { background-color: var(--color-ivory); }
-.bg-sage { background-color: var(--color-sage); }
-.bg-slate { background-color: var(--color-slate); }
-.bg-sand { background-color: var(--color-sand); }
-
-.text-ivory { color: var(--color-ivory); }
-.text-sage { color: var(--color-sage); }
-.text-slate { color: var(--color-slate); }
-.text-sand { color: var(--color-sand); }
-
-/* Custom radius classes */
-.rounded-pill { border-radius: var(--radius-pill); }
-.rounded-card { border-radius: var(--radius-card); }
-
-/* Mobile-first container */
+/* Mobile container */
 .container-mobile {
   width: 100%;
   max-width: 100%;
-  padding-left: 1rem;
-  padding-right: 1rem;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
 }
 
 @media (min-width: 640px) {
@@ -81,12 +131,24 @@ h1, h2, h3, h4, h5, h6 {
     max-width: 640px;
     margin-left: auto;
     margin-right: auto;
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
   }
 }
 
-/* Safe area padding for mobile navigation */
+/* Safe area */
 .pb-safe {
   padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+}
+
+/* Glassmorphism utility */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+}
+
+/* Theme transition for all elements */
+*,
+*::before,
+*::after {
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }

@@ -22,7 +22,8 @@ export function MobileNavigation() {
     const pathname = usePathname();
 
     return (
-        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-sand/95 backdrop-blur-md border-t border-slate/10">
+        <nav className="fixed bottom-0 left-0 right-0 z-50 backdrop-blur-xl border-t border-border/30"
+            style={{ backgroundColor: "var(--nav-bg)" }}>
             <div className="flex items-center justify-around h-16 px-4 pb-[env(safe-area-inset-bottom)]">
                 {navItems.map((item) => {
                     const isActive = pathname === item.href ||
@@ -42,16 +43,16 @@ export function MobileNavigation() {
                                 {isActive && (
                                     <motion.div
                                         layoutId="activeTab"
-                                        className="absolute -top-1 w-8 h-1 rounded-full bg-sage"
+                                        className="absolute -top-1 w-8 h-1 rounded-full bg-primary shadow-[0_0_10px_var(--primary)]"
                                         transition={{ type: "spring", stiffness: 500, damping: 30 }}
                                     />
                                 )}
                                 <Icon
-                                    className={`w-6 h-6 transition-colors duration-200 ${isActive ? "text-sage" : "text-slate/50"
+                                    className={`w-6 h-6 transition-colors duration-200 ${isActive ? "text-primary drop-shadow-[0_0_8px_rgba(var(--primary),0.5)]" : "text-text-secondary/60 hover:text-text-primary"
                                         }`}
                                 />
                                 <span
-                                    className={`text-xs font-medium transition-colors duration-200 ${isActive ? "text-sage" : "text-slate/50"
+                                    className={`text-[10px] font-medium transition-colors duration-200 ${isActive ? "text-primary" : "text-text-secondary/60"
                                         }`}
                                 >
                                     {item.label}
