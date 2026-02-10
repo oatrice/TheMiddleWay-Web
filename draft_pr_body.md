@@ -1,6 +1,8 @@
 This pull request implements the foundational design system for the application, addressing colors and typography as outlined in the issue. It introduces a robust dual-theme system (light and dark modes) and updates the font stack for a more modern aesthetic.
 
-Closes: https://github.com/owner/repo/issues/4
+Closes: https://github.com/oatrice/TheMiddleWay-Metadata/issues/4
+Related: https://github.com/oatrice/TheMiddleWay-Metadata/issues/13
+Related: https://github.com/oatrice/TheMiddleWay-Metadata/issues/14
 
 ### Key Changes
 
@@ -39,3 +41,9 @@ The home page (`app/page.tsx`) has been significantly redesigned to showcase the
 6.  Refresh the page. The selected (dark) theme should persist.
 7.  Switch back to light mode and confirm persistence on refresh.
 8.  Inspect the headings (e.g., "The Middle Way") and confirm they are using the **Outfit** font.
+
+### Screenshots
+
+| Light Mode | Dark Mode |
+| :---: | :---: |
+| <img src="https://raw.githubusercontent.com/oatrice/TheMiddleWay-Metadata/feat/4-design-design-system-implement/docs/features/3_issue-13_light-dark-theme/screenshots/web_light.png" alt="Web Light Mode" width="400"> | <img src="https://raw.githubusercontent.com/oatrice/TheMiddleWay-Metadata/feat/4-design-design-system-implement/docs/features/3_issue-13_light-dark-theme/screenshots/web_dark.png" alt="Web Dark Mode" width="400"> |
