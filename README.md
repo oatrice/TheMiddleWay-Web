@@ -17,14 +17,11 @@ Web application built with Next.js 16 (App Router), TypeScript, and Tailwind CSS
 
 ## Design System
 
-**Warm Modern Sanctuary** palette (matching Android & iOS):
+Features a dual-theme system with a light mode default.
 
-| Token | Color | Usage |
-|-------|-------|-------|
-| Ivory | `#FCF9F6` | Background |
-| Sage | `#8B9D83` | Primary Accent |
-| Slate | `#2D3748` | Text |
-| Sand | `#F3F0ED` | Surface/Cards |
+**Themes:**
+- **Light Mode**: "Bright Sky" blue palette
+- **Dark Mode**: "Deep Cosmos" theme
 
 **Typography:**
 - Headings: Playfair Display (Serif)

@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.2.0] - 2026-02-10
+
+### Added
+
+- Implemented a dual-theme system with support for both Light and Dark modes.
+- Introduced two new themes: a "Bright Sky" light theme and a "Deep Cosmos" dark theme.
+- Added a theme toggle button to allow users to switch between light and dark modes.
+
+### Changed
+
+- Overhauled the application's color palette and styling to support the new theming system.
+- Set the "Bright Sky" light theme as the new default for first-time visitors.
+
 All notable changes to this project will be documented in this file.
 The format is based on Keep a Changelog.
 
