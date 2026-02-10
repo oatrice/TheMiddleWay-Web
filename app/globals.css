@@ -1,18 +1,18 @@
 @import "tailwindcss";
 
 /* ===== Design System: Dual Theme ===== */
-/* Light: Warm Modern Sanctuary (Ivory/Sage) */
+/* Light: Bright Sky (ฟ้าสดใส) */
 /* Dark: Deep Cosmos (Navy/Amber) */
 
-/* --- Light Theme (Default) --- */
+/* --- Light Theme (Default) — Bright Sky --- */
 :root {
-  /* Core Colors - Warm Modern Sanctuary */
-  --color-ivory: #FCF9F6;
-  --color-sage: #8B9D83;
-  --color-sand: #F3F0ED;
-  --color-slate: #2D3748;
-  --color-slate-secondary: #718096;
-  --color-border-light: #E2E8F0;
+  /* Core Colors - Bright Sky */
+  --color-sky-white: #EFF6FF;
+  --color-bright-blue: #2563EB;
+  --color-sky-surface: #DBEAFE;
+  --color-deep-blue: #1E3A5F;
+  --color-blue-gray: #64748B;
+  --color-sky-border: #BFDBFE;
 
   /* Core Colors - Deep Cosmos (always available) */
   --color-navy: #0A192F;
@@ -20,27 +20,27 @@
   --color-slate-dark: #1E293B;
   --color-slate-light: #94A3B8;
 
-  /* Semantic tokens - Light Mode */
-  --background: var(--color-ivory);
-  --foreground: var(--color-slate);
-  --primary: var(--color-sage);
-  --surface: var(--color-sand);
-  --text-primary: var(--color-slate);
-  --text-secondary: var(--color-slate-secondary);
-  --border: var(--color-border-light);
-  --success: #48BB78;
-  --error: #F56565;
-  --warning: #ED8936;
+  /* Semantic tokens - Light Mode (Bright Sky) */
+  --background: var(--color-sky-white);
+  --foreground: var(--color-deep-blue);
+  --primary: var(--color-bright-blue);
+  --surface: var(--color-sky-surface);
+  --text-primary: var(--color-deep-blue);
+  --text-secondary: var(--color-blue-gray);
+  --border: var(--color-sky-border);
+  --success: #10B981;
+  --error: #EF4444;
+  --warning: #F59E0B;
 
   /* Glassmorphism - Light */
-  --glass-bg: rgba(255, 255, 255, 0.6);
-  --glass-border: rgba(0, 0, 0, 0.05);
-  --glass-blur: 10px;
+  --glass-bg: rgba(219, 234, 254, 0.5);
+  --glass-border: rgba(37, 99, 235, 0.1);
+  --glass-blur: 12px;
 
   /* Nav */
-  --nav-bg: rgba(252, 249, 246, 0.9);
-  --nav-active: var(--color-sage);
-  --nav-inactive: var(--color-slate-secondary);
+  --nav-bg: rgba(239, 246, 255, 0.92);
+  --nav-active: var(--color-bright-blue);
+  --nav-inactive: var(--color-blue-gray);
 }
 
 /* --- Dark Theme --- */
@@ -71,9 +71,9 @@
   /* Colors */
   --color-navy: var(--color-navy);
   --color-amber: var(--color-amber);
-  --color-ivory: var(--color-ivory);
-  --color-sage: var(--color-sage);
-  --color-sand: var(--color-sand);
+  --color-sky-white: var(--color-sky-white);
+  --color-bright-blue: var(--color-bright-blue);
+  --color-sky-surface: var(--color-sky-surface);
   --color-slate-light: var(--color-slate-light);
   --color-slate-dark: var(--color-slate-dark);
 
