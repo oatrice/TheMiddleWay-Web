@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Outfit, Inter } from "next/font/google";
 import "./globals.css";
 import { MobileNavigation } from "@/components/layout/MobileNavigation";
+import { ThemeProvider } from "@/components/ThemeProvider";
 
 const outfit = Outfit({
   variable: "--font-outfit",
@@ -33,14 +34,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" data-theme="dark" suppressHydrationWarning>
       <body
-        className={`${outfit.variable} ${inter.variable} antialiased bg-navy text-ivory`}
+        className={`${outfit.variable} ${inter.variable} antialiased`}
       >
-        <main className="pb-safe min-h-screen">
-          {children}
-        </main>
-        <MobileNavigation />
+        <ThemeProvider>
+          <main className="pb-safe min-h-screen">
+            {children}
+          </main>
+          <MobileNavigation />
+        </ThemeProvider>
       </body>
     </html>
   );

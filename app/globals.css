@@ -1,22 +1,70 @@
 @import "tailwindcss";
 
-/* ===== Design System: Deep Cosmos ===== */
+/* ===== Design System: Dual Theme ===== */
+/* Light: Warm Modern Sanctuary (Ivory/Sage) */
+/* Dark: Deep Cosmos (Navy/Amber) */
 
+/* --- Light Theme (Default) --- */
 :root {
-  /* Core Colors */
+  /* Core Colors - Warm Modern Sanctuary */
+  --color-ivory: #FCF9F6;
+  --color-sage: #8B9D83;
+  --color-sand: #F3F0ED;
+  --color-slate: #2D3748;
+  --color-slate-secondary: #718096;
+  --color-border-light: #E2E8F0;
+
+  /* Core Colors - Deep Cosmos (always available) */
   --color-navy: #0A192F;
   --color-amber: #F59E0B;
-  --color-ivory: #F8FAFC; /* Slightly cool white for better contrast on navy */
-  --color-slate-light: #94A3B8; /* Secondary text */
-  --color-slate-dark: #1E293B; /* Secondary background */
-  
-  /* Semantic tokens */
+  --color-slate-dark: #1E293B;
+  --color-slate-light: #94A3B8;
+
+  /* Semantic tokens - Light Mode */
+  --background: var(--color-ivory);
+  --foreground: var(--color-slate);
+  --primary: var(--color-sage);
+  --surface: var(--color-sand);
+  --text-primary: var(--color-slate);
+  --text-secondary: var(--color-slate-secondary);
+  --border: var(--color-border-light);
+  --success: #48BB78;
+  --error: #F56565;
+  --warning: #ED8936;
+
+  /* Glassmorphism - Light */
+  --glass-bg: rgba(255, 255, 255, 0.6);
+  --glass-border: rgba(0, 0, 0, 0.05);
+  --glass-blur: 10px;
+
+  /* Nav */
+  --nav-bg: rgba(252, 249, 246, 0.9);
+  --nav-active: var(--color-sage);
+  --nav-inactive: var(--color-slate-secondary);
+}
+
+/* --- Dark Theme --- */
+[data-theme="dark"] {
   --background: var(--color-navy);
-  --foreground: var(--color-ivory);
+  --foreground: #F8FAFC;
   --primary: var(--color-amber);
   --surface: var(--color-slate-dark);
+  --text-primary: #F8FAFC;
+  --text-secondary: var(--color-slate-light);
+  --border: #334155;
   --success: #10B981;
   --error: #EF4444;
+  --warning: #F59E0B;
+
+  /* Glassmorphism - Dark */
+  --glass-bg: rgba(255, 255, 255, 0.05);
+  --glass-border: rgba(255, 255, 255, 0.05);
+  --glass-blur: 10px;
+
+  /* Nav */
+  --nav-bg: rgba(10, 25, 47, 0.9);
+  --nav-active: var(--color-amber);
+  --nav-inactive: rgba(148, 163, 184, 0.6);
 }
 
 @theme inline {
@@ -24,18 +72,23 @@
   --color-navy: var(--color-navy);
   --color-amber: var(--color-amber);
   --color-ivory: var(--color-ivory);
+  --color-sage: var(--color-sage);
+  --color-sand: var(--color-sand);
   --color-slate-light: var(--color-slate-light);
   --color-slate-dark: var(--color-slate-dark);
-  
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-primary: var(--primary);
   --color-surface: var(--surface);
-  
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-border: var(--border);
+
   /* Radius */
   --radius-pill: 9999px;
   --radius-card: 1.5rem;
-  
+
   /* Typography */
   --font-heading: var(--font-outfit);
   --font-body: var(--font-inter);
@@ -49,22 +102,21 @@ body {
   min-height: 100vh;
   min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Typography */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--font-heading), sans-serif;
   font-weight: 700;
-  color: var(--foreground);
+  color: var(--text-primary);
   letter-spacing: -0.02em;
 }
-
-/* Utility classes mapping */
-.bg-navy { background-color: var(--color-navy); }
-.bg-amber { background-color: var(--color-amber); }
-.text-navy { color: var(--color-navy); }
-.text-amber { color: var(--color-amber); }
-.text-ivory { color: var(--color-ivory); }
 
 /* Mobile container */
 .container-mobile {
@@ -89,7 +141,14 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Glassmorphism utility */
 .glass {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+}
+
+/* Theme transition for all elements */
+*,
+*::before,
+*::after {
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
