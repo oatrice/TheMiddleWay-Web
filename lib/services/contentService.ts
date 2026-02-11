@@ -1,16 +1,60 @@
-import { WeeklyContent } from '../types/content';
+import { WeeklyContent, CsvValidationError } from '../types/content';
 
 export const CONTENT_STORAGE_KEY = 'mdw_weekly_content';
+// Use env var or default to localhost:8080
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
 
 export interface ContentStorageSchema {
     version: number;
     items: Record<string, WeeklyContent>; // Keyed by ID for O(1) upsert
 }
 
+export interface UploadResponse {
+    status: string;
+    message: string;
+    count?: number;
+    errors?: CsvValidationError[];
+}
+
 const CURRENT_VERSION = 1;
 
 /**
- * Loads all content from LocalStorage.
+ * Uploads a CSV file to the backend for processing and storage.
+ */
+export async function uploadContentCsv(file: File): Promise<UploadResponse> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/content/upload`, {
+            method: 'POST',
+            body: formData,
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            // Handle validation errors from backend
+            return {
+                status: 'error',
+                message: result.message || 'Upload failed',
+                errors: result.errors || [{ row: 0, message: result.message || 'Unknown error' }]
+            };
+        }
+
+        return result;
+    } catch (error) {
+        console.error('Network request failed:', error);
+        return {
+            status: 'error',
+            message: 'Network error. Please check if the backend server is running.',
+            errors: [{ row: 0, message: 'Could not connect to backend server.' }]
+        };
+    }
+}
+
+/**
+ * Loads all content from LocalStorage (Deprecated for production, kept for fallback/dev).
  * Returns an empty object structure if nothing exists or error occurs.
  */
 export function getAllContent(): WeeklyContent[] {
