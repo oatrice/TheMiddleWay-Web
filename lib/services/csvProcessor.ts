@@ -51,6 +51,8 @@ export async function parseAndValidateCsv(csvContent: string): Promise<CsvProces
         const titleVal = row[idxTitle].trim();
         const contentVal = row[idxContent].trim();
 
+        const initialErrorCount = errors.length;
+
         // Field Validation
         if (isNaN(weekVal) || weekVal < 1 || weekVal > 8) {
             errors.push({ row: i + 1, message: `Week must be between 1 and 8. Got: ${weekVal}` });
@@ -64,8 +66,8 @@ export async function parseAndValidateCsv(csvContent: string): Promise<CsvProces
             errors.push({ row: i + 1, message: 'Title cannot be empty.' });
         }
 
-        // Create Valid Object if no errors for this row (but we collect errors globally for Atomic FR4)
-        if (errors.length === 0) {
+        // Create Valid Object if no NEW errors for this row
+        if (errors.length === initialErrorCount) {
             validData.push({
                 id: `week-${weekVal}-${categoryVal.toLowerCase().replace(/\s+/g, '-')}`,
                 week: weekVal,

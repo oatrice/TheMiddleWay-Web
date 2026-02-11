@@ -39,11 +39,13 @@ jobs:
       - name: Find latest production deployment
         id: deployment
         run: |
-          # Get the latest production deployment URL
-          DEPLOYMENT_URL=$(vercel ls --token=${{ secrets.VERCEL_TOKEN }} --prod 2>/dev/null | grep "Ready" | head -1 | awk '{print $2}')
-          if [ -z "$DEPLOYMENT_URL" ]; then
+          # Use the more robust JSON output to find the latest deployment URL
+          DEPLOYMENT_URL=$(vercel ls --token=${{ secrets.VERCEL_TOKEN }} --prod --json | jq -r '.deployments[0].url')
+          
+          if [ -z "$DEPLOYMENT_URL" ] || [ "$DEPLOYMENT_URL" == "null" ]; then
             echo "⚠️ No production deployment found, deploying now..."
-            DEPLOYMENT_URL=$(vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }} 2>/dev/null | tail -1)
+            # vercel deploy returns full URL, strip protocol if needed, but alias set usually handles it
+            DEPLOYMENT_URL=$(vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }} 2>/dev/null | tail -1 | sed 's/https:\/\///')
           fi
           echo "deployment_url=$DEPLOYMENT_URL" >> $GITHUB_OUTPUT
           echo "🔗 Deployment: $DEPLOYMENT_URL"
