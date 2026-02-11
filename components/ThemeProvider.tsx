@@ -10,7 +10,6 @@ interface ThemeContextType {
     isLight: boolean;
     toggleTheme: () => void;
     setTheme: (mode: ThemeMode) => void;
-    mounted: boolean;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);

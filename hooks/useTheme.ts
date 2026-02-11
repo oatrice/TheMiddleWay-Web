@@ -8,18 +8,11 @@ const DEFAULT_THEME: ThemeMode = "light";
 
 export function useTheme() {
     const [theme, setThemeState] = useState<ThemeMode>(DEFAULT_THEME);
-    const [mounted, setMounted] = useState(false);
-
-    // Set mounted state
-    useEffect(() => {
-        setMounted(true);
-    }, []);
 
     // Apply theme to document
     useEffect(() => {
-        if (!mounted) return;
         document.documentElement.setAttribute("data-theme", theme);
-    }, [theme, mounted]);
+    }, [theme]);
 
     const toggleTheme = useCallback(() => {
         setThemeState((prev) => (prev === "dark" ? "light" : "dark"));
@@ -35,6 +28,5 @@ export function useTheme() {
         isLight: theme === "light",
         toggleTheme,
         setTheme,
-        mounted,
     };
 }

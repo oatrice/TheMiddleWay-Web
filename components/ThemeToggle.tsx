@@ -5,14 +5,7 @@ import { Sun, Moon } from "lucide-react";
 import { useThemeContext } from "@/components/ThemeProvider";
 
 export function ThemeToggle() {
-    const { isDark, toggleTheme, mounted } = useThemeContext();
-
-    // Prevent hydration mismatch
-    if (!mounted) {
-        return (
-            <div className="w-10 h-10 rounded-full bg-surface/50" />
-        );
-    }
+    const { isDark, toggleTheme } = useThemeContext();
 
     return (
         <motion.button
