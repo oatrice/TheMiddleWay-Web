@@ -1,0 +1,66 @@
+name: Vercel Version Alias
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+jobs:
+  alias:
+    name: Create Version-Tagged URL
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          VERSION="${TAG#v}"
+          # Convert dots to dashes for URL: v0.3.0 → v0-3-0
+          URL_SAFE=$(echo "$TAG" | tr '.' '-')
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "url_safe=$URL_SAFE" >> $GITHUB_OUTPUT
+          echo "📦 Tag: $TAG | Version: $VERSION | URL-safe: $URL_SAFE"
+
+      - name: Pull Vercel Environment
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Find latest production deployment
+        id: deployment
+        run: |
+          # Get the latest production deployment URL
+          DEPLOYMENT_URL=$(vercel ls --token=${{ secrets.VERCEL_TOKEN }} --prod 2>/dev/null | grep "Ready" | head -1 | awk '{print $2}')
+          if [ -z "$DEPLOYMENT_URL" ]; then
+            echo "⚠️ No production deployment found, deploying now..."
+            DEPLOYMENT_URL=$(vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }} 2>/dev/null | tail -1)
+          fi
+          echo "deployment_url=$DEPLOYMENT_URL" >> $GITHUB_OUTPUT
+          echo "🔗 Deployment: $DEPLOYMENT_URL"
+
+      - name: Create version alias
+        run: |
+          ALIAS="${{ steps.version.outputs.url_safe }}.the-middle-way.vercel.app"
+          echo "🏷️ Creating alias: $ALIAS → ${{ steps.deployment.outputs.deployment_url }}"
+          vercel alias set "${{ steps.deployment.outputs.deployment_url }}" "$ALIAS" --token=${{ secrets.VERCEL_TOKEN }}
+          echo "✅ Alias created: https://$ALIAS"
+
+      - name: Summary
+        run: |
+          echo "## 🏷️ Version Deployment" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Type | URL |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|-----|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Production** | https://the-middle-way.vercel.app |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Version (${{ steps.version.outputs.tag }})** | https://${{ steps.version.outputs.url_safe }}.the-middle-way.vercel.app |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Deployment** | https://${{ steps.deployment.outputs.deployment_url }} |" >> $GITHUB_STEP_SUMMARY
