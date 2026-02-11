@@ -4,7 +4,7 @@ import {
     loadProgress,
     clearProgress,
 } from "../persistenceService";
-import { UserProgress, DEFAULT_PROGRESS, STORAGE_KEY } from "../../types/progress";
+import { UserProgress, STORAGE_KEY } from "../../types/progress";
 
 // ===================================================================
 // 🟥 RED Phase: Failing Tests

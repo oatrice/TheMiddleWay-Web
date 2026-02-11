@@ -17,21 +17,22 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
     const themeState = useTheme();
+    const { theme, setTheme } = themeState;
     const { progress, setThemeMode } = useProgress();
 
     // Sync: เมื่อ progress โหลดค่า theme จาก persistence → set ให้ useTheme
     useEffect(() => {
-        if (progress.themeMode !== themeState.theme) {
-            themeState.setTheme(progress.themeMode);
+        if (progress.themeMode !== theme) {
+            setTheme(progress.themeMode);
         }
-    }, [progress.themeMode, themeState.theme, themeState.setTheme]);
+    }, [progress.themeMode, theme, setTheme]);
 
     // Sync: เมื่อ useTheme toggle → บันทึกกลับไป progress
     useEffect(() => {
-        if (themeState.theme !== progress.themeMode) {
-            setThemeMode(themeState.theme);
+        if (theme !== progress.themeMode) {
+            setThemeMode(theme);
         }
-    }, [themeState.theme, progress.themeMode, setThemeMode]);
+    }, [theme, progress.themeMode, setThemeMode]);
 
     return (
         <ThemeContext.Provider value={themeState}>

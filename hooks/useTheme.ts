@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from "react";
 
 export type ThemeMode = "light" | "dark";
 
-const STORAGE_KEY = "theme-mode";
 const DEFAULT_THEME: ThemeMode = "light";
 
 export function useTheme() {
