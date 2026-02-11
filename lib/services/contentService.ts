@@ -2,7 +2,7 @@ import { WeeklyContent, CsvValidationError } from '../types/content';
 
 export const CONTENT_STORAGE_KEY = 'mdw_weekly_content';
 // Use env var or default to localhost:8080
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
 
 export interface ContentStorageSchema {
     version: number;
