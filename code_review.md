@@ -1,104 +1,89 @@
 # Luma Code Review Report
 
-**Date:** 2026-02-11 11:28:07
-**Files Reviewed:** ['components/__tests__/ProgressProvider.test.tsx', 'app/profile/page.tsx', 'lib/services/__tests__/persistenceService.test.ts', 'lib/types/progress.ts', 'vitest.config.ts', 'components/DebugProgressControl.tsx', 'package-lock.json', 'lib/types/index.ts', 'components/ThemeProvider.tsx', 'app/layout.tsx', 'hooks/useTheme.ts', 'lib/services/persistenceService.ts', 'lib/services/index.ts', 'package.json', 'components/ProgressProvider.tsx', '.github/workflows/web-ci.yml']
+**Date:** 2026-02-11 15:43:29
+**Files Reviewed:** ['lib/services/csvProcessor.test.ts', '.github/workflows/vercel-version-alias.yml', 'lib/services/csvProcessor.ts', 'lib/constants/categories.ts', 'lib/services/contentService.ts', 'lib/services/contentService.test.ts', 'components/admin/CsvUploadForm.tsx', 'lib/types/content.ts', '.gitignore', '.github/workflows/auto-tag.yml', 'app/admin/content/page.tsx']
 
 ## 📝 Reviewer Feedback
 
-There are a few issues that need to be addressed before this code can be approved.
+There are two issues in the provided code changes: a logic error in the CSV processor and a brittle script in a GitHub Actions workflow.
 
-### 1. Critical: Incomplete `useEffect` Dependencies in `ThemeProvider.tsx`
+### 1. Logic Error in CSV Processor
 
-In `components/ThemeProvider.tsx`, both `useEffect` hooks have the `exhaustive-deps` ESLint rule disabled, and their dependency arrays are incomplete. This can lead to stale state and bugs where the theme does not sync correctly.
+**File:** `lib/services/csvProcessor.ts`
 
 **Problem:**
--   The first `useEffect` depends on `progress.themeMode` but also uses `themeState.theme` and `themeState.setTheme` without listing them as dependencies.
--   The second `useEffect` depends on `themeState.theme` but also uses `progress.themeMode` and `setThemeMode` without listing them.
+In the `parseAndValidateCsv` function, inside the `for` loop that processes each row, the code checks `if (errors.length === 0)` before adding a parsed row to the `validData` array. The `errors` array accumulates errors for the *entire file*. This means that once the first invalid row is found, no subsequent rows (even if they are valid) will be added to `validData`.
+
+While the function's final behavior is correct due to the atomic check at the end (it returns `success: false` and discards `validData` if any errors exist), the implementation within the loop is logically flawed and doesn't correctly build the set of all valid rows before the final check.
 
 **Fix:**
-Include all reactive values in the dependency arrays. The conditional checks (`if (A !== B)`) inside the effects are sufficient to prevent infinite loops.
+To fix this, you should only check for errors added for the *current row*. A simple way to do this is to check the error count before and after validating the current row.
 
 ```typescript
-// components/ThemeProvider.tsx
-
-// Sync: when progress loads theme from persistence -> set it for useTheme
-useEffect(() => {
-    if (progress.themeMode !== themeState.theme) {
-        themeState.setTheme(progress.themeMode);
-    }
-    // Add all dependencies and remove the eslint-disable comment
-}, [progress.themeMode, themeState.theme, themeState.setTheme]);
-
-// Sync: when useTheme toggles -> save it back to progress
-useEffect(() => {
-    if (themeState.theme !== progress.themeMode) {
-        setThemeMode(themeState.theme);
-    }
-    // Add all dependencies and remove the eslint-disable comment
-}, [themeState.theme, progress.themeMode, setThemeMode]);
-```
-
-### 2. Process: Missing Test Step in CI Workflow
-
-The CI workflow in `.github/workflows/web-ci.yml` builds and lints the project but does not run the tests. Given the comprehensive test suites written for `ProgressProvider` and `persistenceService`, they should be part of the CI pipeline to catch regressions automatically.
-
-**Fix:**
-Add a step to run the tests in your CI workflow file.
-
-```yaml
-// .github/workflows/web-ci.yml
-
-      - name: Lint
-        run: npm run lint
-
-      # Add this step
-      - name: Test
-        run: npm run test
-
-      - name: Build
-        run: npm run build
-```
-
-### 3. Best Practice: Redundant Persistence in `useTheme.ts`
-
-The `useTheme` hook manages its own state in `localStorage` under the key `"theme-mode"`. However, the `ProgressProvider` is intended to be the single source of truth for all persisted user data, including `themeMode`, which it saves under `"theMiddleWay.progress"`.
-
-This creates two separate, redundant sources of truth in `localStorage`. While the `ThemeProvider` component currently forces them to sync, this approach is confusing and inefficient.
-
-**Fix:**
-The `useTheme` hook should not be responsible for persistence. Remove the `localStorage` logic from `hooks/useTheme.ts`. The `ThemeProvider` already ensures the theme is correctly sourced from `ProgressProvider`.
-
-```typescript
-// hooks/useTheme.ts
+// In lib/services/csvProcessor.ts, inside the for loop:
 
 // ...
+for (let i = 1; i < lines.length; i++) {
+    const row = parseCsvLine(lines[i]);
+    // ...
+    
+    const errorsBeforeRow = errors.length; // Store error count before this row
 
-export function useTheme() {
-    const [theme, setThemeState] = useState<ThemeMode>(DEFAULT_THEME);
-    const [mounted, setMounted] = useState(false);
+    // ... (all validation checks for the current row)
+    if (isNaN(weekVal) || weekVal < 1 || weekVal > 8) {
+        errors.push({ row: i + 1, message: `Week must be between 1 and 8. Got: ${weekVal}` });
+    }
+    // ...
 
-    // Remove the useEffect that reads from localStorage.
-    // The initial theme will be set by ThemeProvider.
-    useEffect(() => {
-        setMounted(true);
-    }, []);
-
-    // Apply theme to document, but DO NOT write to localStorage here.
-    useEffect(() => {
-        if (!mounted) return;
-        document.documentElement.setAttribute("data-theme", theme);
-        // localStorage.setItem(STORAGE_KEY, theme); // <-- REMOVE THIS LINE
-    }, [theme, mounted]);
-
-    // ... rest of the hook is fine
+    // Only add data if no new errors were generated for this specific row
+    if (errors.length === errorsBeforeRow) {
+        validData.push({
+            id: `week-${weekVal}-${categoryVal.toLowerCase().replace(/\s+/g, '-')}`,
+            week: weekVal,
+            category: categoryVal as ContentCategory,
+            title: titleVal,
+            content: contentVal,
+            lastUpdated: new Date().toISOString()
+        });
+    }
 }
+// ...
+```
+
+### 2. Brittle CI/CD Script
+
+**File:** `.github/workflows/vercel-version-alias.yml`
+
+**Problem:**
+The `Find latest production deployment` step parses the human-readable text output of the `vercel ls` command using `grep`, `head`, and `awk`. This approach is fragile and will break if the Vercel CLI team ever changes the format of the text output.
+
+**Fix:**
+For more robust automation, you should use the JSON output flag (`--json`) provided by the Vercel CLI and parse it with a tool like `jq`. The `ubuntu-latest` runner has `jq` pre-installed.
+
+```yaml
+# In .github/workflows/vercel-version-alias.yml
+
+      - name: Find latest production deployment
+        id: deployment
+        run: |
+          # Use the more robust JSON output to find the latest deployment URL
+          DEPLOYMENT_URL=$(vercel ls --token=${{ secrets.VERCEL_TOKEN }} --prod --json | jq -r '.deployments[0].url')
+          
+          if [ -z "$DEPLOYMENT_URL" ] || [ "$DEPLOYMENT_URL" == "null" ]; then
+            echo "⚠️ No production deployment found, deploying now..."
+            DEPLOYMENT_URL=$(vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }} 2>/dev/null | tail -1)
+          fi
+          echo "deployment_url=$DEPLOYMENT_URL" >> $GITHUB_OUTPUT
+          echo "🔗 Deployment: $DEPLOYMENT_URL"
 ```
 
 ## 🧪 Test Suggestions
 
-*   **Corrupted or Invalid Data in `localStorage`**: The provider should handle cases where the data stored in `localStorage` is not valid JSON. For example, if `localStorage.getItem("theMiddleWay.progress")` returns `"{'invalid-json'"}`. The application should not crash and should gracefully fall back to the default initial state.
+Here are 3 critical, edge-case test cases that should be added or verified for the CSV processor:
 
-*   **Partial or Incomplete Saved Data**: Test the scenario where the saved data in `localStorage` is valid JSON but is missing some keys that the current application version expects (e.g., a user is returning with data from an older version of the app that didn't have a `bookmarks` property). The provider should merge the saved data with the default state, ensuring no properties are `undefined`.
+*   **Empty or Header-Only CSV:** Test the function with a CSV string that is either completely empty (`''`) or contains only the header row (`'Week,Category,Title,Content'`). The parser should handle this gracefully, likely returning a success status with an empty data array, rather than throwing an error.
 
-*   **Data from a Future Schema Version**: An edge case where the `version` number in the saved `localStorage` data is *higher* than the provider's current default version (e.g., `version: 99`). This could happen if a user downgrades their app version. The provider should handle this by discarding the incompatible future-state data and resetting to the default state to prevent errors.
+*   **Invalid Data Type for 'Week' Column:** Create a test case where the `Week` column contains a non-numeric value (e.g., `'abc'`, `'one'`, or an empty string). The validation should fail with a specific error message indicating that the 'Week' value must be a number, which is a different failure mode than the existing out-of-range check.
+
+*   **CSV with Multiple Errors:** Test a CSV file that contains multiple validation failures across different rows. For example, one row could have a `Week` of `9` and another row could have an invalid `Category` like `'Chores'`. The test should assert that the `result.errors` array contains an entry for *each* distinct error, ensuring the processor doesn't stop after finding the first issue.
 
