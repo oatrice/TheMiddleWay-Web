@@ -4,6 +4,7 @@ import "./globals.css";
 import { MobileNavigation } from "@/components/layout/MobileNavigation";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ProgressProvider } from "@/components/ProgressProvider";
+import { getMetadataBase } from "@/lib/runtime/appInfo";
 
 const outfit = Outfit({
   variable: "--font-outfit",
@@ -20,6 +21,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "The Middle Way",
   description: "Find balance in your journey",
+  metadataBase: getMetadataBase(),
 };
 
 export const viewport: Viewport = {
