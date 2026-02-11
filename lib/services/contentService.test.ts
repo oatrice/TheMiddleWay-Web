@@ -1,9 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
 import { uploadContentCsv, API_BASE_URL } from './contentService';
 
 describe('contentService', () => {
     describe('uploadContentCsv', () => {
-        let fetchMock: any;
+        let fetchMock: Mock;
 
         beforeEach(() => {
             fetchMock = vi.fn();
