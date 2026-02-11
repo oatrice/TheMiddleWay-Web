@@ -1,49 +1,48 @@
-This pull request implements the foundational design system for the application, addressing colors and typography as outlined in the issue. It introduces a robust dual-theme system (light and dark modes) and updates the font stack for a more modern aesthetic.
+Closes https://github.com/owner/repo/issues/6, https://github.com/oatrice/TheMiddleWay-Metadata/issues/15
 
-Closes: https://github.com/oatrice/TheMiddleWay-Metadata/issues/4
-Related: https://github.com/oatrice/TheMiddleWay-Metadata/issues/13
-Related: https://github.com/oatrice/TheMiddleWay-Metadata/issues/14
+### Summary
+
+This pull request introduces a crucial infrastructure component: a persistence layer using the browser's `localStorage`. This system is designed to track and save user progress, including completed lessons, bookmarks, and application settings (like theme and language). By persisting this data, we ensure a seamless user experience across sessions, as users will not lose their progress upon refreshing the page or returning to the app later.
+
+The implementation is centered around a new `ProgressProvider` that acts as a global state manager, syncing automatically with `localStorage`.
 
 ### Key Changes
 
-#### 1. Dual-Theme System (Light & Dark Mode)
-A comprehensive themeing system has been implemented to allow users to switch between a light and a dark mode. The selected theme is persisted in `localStorage`.
+*   **`persistenceService.ts`:** A new, dedicated service has been created to abstract all direct interactions with `localStorage`. It provides three core functions: `saveProgress`, `loadProgress`, and `clearProgress`. This centralizes persistence logic and makes it easily testable.
 
--   **Dark Theme ("Deep Cosmos"):** Utilizes a deep navy blue background (`#0A192F`) for a focused, low-light experience.
--   **Light Theme ("Bright Sky"):** Features a clean, bright palette for optimal daytime readability.
--   **Accent Color:** A vibrant amber (`#F59E0B`) is used as the primary accent color across both themes to highlight interactive elements.
--   **CSS Variables:** The color palette is defined using CSS variables scoped under `[data-theme="light"]` and `[data-theme="dark"]` in `app/globals.css`. Components now use semantic variable names (e.g., `bg-surface`, `text-primary`, `border-border`) for theme-agnostic styling.
+*   **`ProgressProvider` and `useProgress` Hook:**
+    *   Implemented a global state provider using `React.Context` and the `useReducer` hook for robust state management.
+    *   This provider wraps the entire application (`app/layout.tsx`) to make progress data available everywhere.
+    *   It automatically loads saved data from `localStorage` on initial mount and auto-saves any subsequent changes to the progress state.
 
-#### 2. Theme Management Architecture
-To manage the theme state, the following have been created:
--   **`useTheme` Hook:** A custom hook that handles the core logic of reading from/writing to `localStorage`, applying the `data-theme` attribute to the `<html>` element, and providing state.
--   **`ThemeProvider` Context:** Wraps the application to provide global access to the current theme and the toggle function.
--   **`ThemeToggle` Component:** A new UI component in the header that allows users to seamlessly switch between light and dark modes, complete with a smooth `framer-motion` animation.
+*   **Theme Persistence Refactor:**
+    *   The `ThemeProvider` and `useTheme` hook have been refactored.
+    *   Instead of managing their own `localStorage` state, they now sync bi-directionally with the `ProgressProvider`. This consolidates all persisted state into a single, unified `UserProgress` object.
 
-#### 3. Typography Update
-The application's typography has been refreshed to better align with the new design direction:
--   The serif font `Playfair_Display` has been replaced with the modern sans-serif font **`Outfit`** for all headings and display text.
--   `Inter` is retained as the primary font for body copy and UI elements.
+*   **Developer Debug Tool (`DebugProgressControl.tsx`):**
+    *   A new debug component has been added to the `/profile` page to facilitate easy testing and verification.
+    *   It displays the live `progress` state object as JSON.
+    *   It includes buttons to trigger state changes (e.g., complete a lesson, toggle language, reset data) to confirm persistence works correctly after a page refresh.
 
-#### 4. UI Redesign and Refinements
-The home page (`app/page.tsx`) has been significantly redesigned to showcase the new design system.
--   **Visual Polish:** Elements now feature subtle borders, background blurs, gradients, and improved hover states.
--   **Animations:** `framer-motion` has been integrated to add subtle entry animations to page elements, enhancing the user experience.
--   **Component Updates:** Existing components, such as `MobileNavigation`, have been updated to use the new theme variables.
+*   **Comprehensive Unit Testing:**
+    *   Added extensive unit tests using Vitest to ensure the reliability of the new system.
+    *   Tests cover the `persistenceService` functions (`lib/services/__tests__/persistenceService.test.ts`).
+    *   Tests also cover the `ProgressProvider` and `useProgress` hook, including state updates, initialization, and auto-saving logic (`components/__tests__/ProgressProvider.test.tsx`).
+
+*   **CI Workflow Enhancement:**
+    *   The CI pipeline (`.github/workflows/web-ci.yml`) has been updated to include a `test` step, ensuring that all tests are automatically executed on every push to maintain code quality.
 
 ### How to Test
 
-1.  Pull down the branch and run the application.
-2.  The application should load in **light mode** by default.
-3.  Locate the new **sun/moon icon** in the header and click it.
-4.  The UI should smoothly transition to the dark "Deep Cosmos" theme.
-5.  Verify that all text, backgrounds, and interactive elements have adapted correctly.
-6.  Refresh the page. The selected (dark) theme should persist.
-7.  Switch back to light mode and confirm persistence on refresh.
-8.  Inspect the headings (e.g., "The Middle Way") and confirm they are using the **Outfit** font.
+1.  Navigate to the `/profile` page.
+2.  You should see a new **"🛠️ Debug: Persistence Control"** section.
+3.  Click the buttons to modify the state, for example:
+    *   "✅ Complete Lesson (Random)"
+    *   "🌐 Toggle Lang"
+4.  Observe the JSON data updating in the debug view.
+5.  **Refresh the page.**
+6.  **Verification:** The state you set in the previous steps should still be present in the debug view, confirming that the data was successfully reloaded from `localStorage`.
+7.  (Optional) Open your browser's DevTools (Application -> Local Storage) and inspect the `theMiddleWay.progress` key to see the raw stored data.
+8.  Click the "⚠️ Reset All Data" button and refresh the page. The state should revert to its default values.
 
-### Screenshots
-
-| Light Mode | Dark Mode |
-| :---: | :---: |
-| <img src="https://raw.githubusercontent.com/oatrice/TheMiddleWay-Metadata/feat/4-design-design-system-implement/docs/features/3_issue-13_light-dark-theme/screenshots/web_light.png" alt="Web Light Mode" width="400"> | <img src="https://raw.githubusercontent.com/oatrice/TheMiddleWay-Metadata/feat/4-design-design-system-implement/docs/features/3_issue-13_light-dark-theme/screenshots/web_dark.png" alt="Web Dark Mode" width="400"> |
+#### Screenshot of the Debug Tool  <!-- Replace with actual screenshot -->

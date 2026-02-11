@@ -2,388 +2,633 @@
 
 You are an AI assistant helping to create a Pull Request description.
     
-TASK: [Design] Design System Implementation: Colors (#0A192F, #F59E0B) and Typography
+TASK: [Infrastructure] Persistence Layer: LocalStorage System for Progress Tracking
 ISSUE: {
-  "title": "[Design] Design System Implementation: Colors (#0A192F, #F59E0B) and Typography",
-  "number": 4
+  "title": "[Infrastructure] Persistence Layer: LocalStorage System for Progress Tracking",
+  "number": 6
 }
 
 GIT CONTEXT:
 COMMITS:
-7d4c87f feat: implement dual-theme system with light and dark modes
-e440588 docs: add Luma code review report with theme test suggestions
-8eb3b62 feat(theme): set light mode as default theme
-3d84f2b feat(theme): redesign light theme to Bright Sky blue palette
-1305da8 feat(theme): implement dual theme system with light and dark modes
-fbae0d2 ✨ feat(theme): Apply "Deep Cosmos" theme
+33f3eac feat: [Infrastructure] Persistence Layer: LocalStorage S...
+6546f36 ci(web): add test step to CI workflow and update review docs
+a5afd98 feat(profile): add debug tool to verify progress persistence
+d66611b feat(progress): add user progress provider with localStorage sync
+ba895bd test(persistence): add unit tests for localStorage progress operations
+6c21930 fix: ignore exhaustive-deps for theme initialization
+c9070a5 ci: add workflow_dispatch trigger
+a2963a5 ci: add web build workflow
 
 STATS:
-CHANGELOG.md                           |  13 +++
- README.md                              |  13 +--
- app/globals.css                        | 164 +++++++++++++++++++++++----------
- app/layout.tsx                         |  21 +++--
- app/page.tsx                           | 105 ++++++++++++++-------
- code_review.md                         |  15 +++
- components/ThemeProvider.tsx           |  33 +++++++
- components/ThemeToggle.tsx             |  40 ++++++++
- components/layout/MobileNavigation.tsx |   9 +-
- hooks/useTheme.ts                      |  46 +++++++++
- package.json                           |   2 +-
- 11 files changed, 353 insertions(+), 108 deletions(-)
+.github/workflows/web-ci.yml                      |   34 +
+ CHANGELOG.md                                      |   11 +
+ README.md                                         |    1 +
+ app/layout.tsx                                    |   15 +-
+ app/profile/page.tsx                              |   11 +-
+ code_review.md                                    |  101 +-
+ components/DebugProgressControl.tsx               |   64 +
+ components/ProgressProvider.tsx                   |  149 +
+ components/ThemeProvider.tsx                      |   18 +-
+ components/__tests__/ProgressProvider.test.tsx    |  200 ++
+ hooks/useTheme.ts                                 |    7 +-
+ lib/services/__tests__/persistenceService.test.ts |  144 +
+ lib/services/index.ts                             |    2 +
+ lib/services/persistenceService.ts                |   78 +
+ lib/types/index.ts                                |    3 +
+ lib/types/progress.ts                             |   25 +
+ package-lock.json                                 | 3445 +++++++++++++++++----
+ package.json                                      |   12 +-
+ vitest.config.ts                                  |   14 +
+ 19 files changed, 3672 insertions(+), 662 deletions(-)
 
 KEY FILE DIFFS:
 diff --git a/app/layout.tsx b/app/layout.tsx
-index a0bb821..89d7f5a 100644
+index 89d7f5a..6bf0ec4 100644
 --- a/app/layout.tsx
 +++ b/app/layout.tsx
-@@ -1,10 +1,11 @@
- import type { Metadata, Viewport } from "next";
--import { Playfair_Display, Inter } from "next/font/google";
-+import { Outfit, Inter } from "next/font/google";
+@@ -3,6 +3,7 @@ import { Outfit, Inter } from "next/font/google";
  import "./globals.css";
  import { MobileNavigation } from "@/components/layout/MobileNavigation";
-+import { ThemeProvider } from "@/components/ThemeProvider";
+ import { ThemeProvider } from "@/components/ThemeProvider";
++import { ProgressProvider } from "@/components/ProgressProvider";
  
--const playfair = Playfair_Display({
--  variable: "--font-playfair",
-+const outfit = Outfit({
-+  variable: "--font-outfit",
-   subsets: ["latin"],
-   display: "swap",
- });
-@@ -33,14 +34,16 @@ export default function RootLayout({
-   children: React.ReactNode;
- }>) {
-   return (
--    <html lang="en">
-+    <html lang="en" data-theme="light" suppressHydrationWarning>
+ const outfit = Outfit({
+   variable: "--font-outfit",
+@@ -38,12 +39,14 @@ export default function RootLayout({
        <body
--        className={`${playfair.variable} ${inter.variable} antialiased bg-ivory text-slate`}
-+        className={`${outfit.variable} ${inter.variable} antialiased`}
+         className={`${outfit.variable} ${inter.variable} antialiased`}
        >
--        <main className="pb-safe min-h-screen">
--          {children}
--        </main>
--        <MobileNavigation />
-+        <ThemeProvider>
-+          <main className="pb-safe min-h-screen">
-+            {children}
-+          </main>
-+          <MobileNavigation />
-+        </ThemeProvider>
+-        <ThemeProvider>
+-          <main className="pb-safe min-h-screen">
+-            {children}
+-          </main>
+-          <MobileNavigation />
+-        </ThemeProvider>
++        <ProgressProvider>
++          <ThemeProvider>
++            <main className="pb-safe min-h-screen">
++              {children}
++            </main>
++            <MobileNavigation />
++          </ThemeProvider>
++        </ProgressProvider>
        </body>
      </html>
    );
-diff --git a/app/page.tsx b/app/page.tsx
-index 9c6987c..91162c1 100644
---- a/app/page.tsx
-+++ b/app/page.tsx
-@@ -1,64 +1,99 @@
-+"use client";
+diff --git a/app/profile/page.tsx b/app/profile/page.tsx
+index f63dd14..fd55be0 100644
+--- a/app/profile/page.tsx
++++ b/app/profile/page.tsx
+@@ -1,3 +1,5 @@
++import { DebugProgressControl } from "@/components/DebugProgressControl";
 +
- import { motion } from "framer-motion";
-+import { ThemeToggle } from "@/components/ThemeToggle";
-+
-+const container = {
-+  hidden: { opacity: 0 },
-+  show: {
-+    opacity: 1,
-+    transition: {
-+      staggerChildren: 0.1
-+    }
-+  }
-+};
-+
-+const item = {
-+  hidden: { opacity: 0, y: 20 },
-+  show: { opacity: 1, y: 0 }
-+};
+ export default function ProfilePage() {
+     return (
+         <div className="container-mobile py-8">
+@@ -9,7 +11,7 @@ export default function ProfilePage() {
+                 </p>
+             </header>
  
- export default function Home() {
-   return (
--    <div className="container-mobile py-8">
-+    <motion.div
-+      variants={container}
-+      initial="hidden"
-+      animate="show"
-+      className="container-mobile py-8 pb-32"
-+    >
-       {/* Header */}
--      <header className="mb-8">
--        <h1 className="text-3xl mb-2">
--          The Middle Way
--        </h1>
--        <p className="text-slate/70">
--          Find balance in your journey
--        </p>
--      </header>
-+      <motion.header variants={item} className="mb-8 flex items-start justify-between">
-+        <div>
-+          <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-text-primary to-text-secondary bg-clip-text text-transparent">
-+            The Middle Way
-+          </h1>
-+          <p className="text-text-secondary text-lg">
-+            Find balance in your journey
-+          </p>
-+        </div>
-+        <ThemeToggle />
-+      </motion.header>
- 
-       {/* Welcome Card */}
--      <section className="bg-sand rounded-card p-6 mb-6">
--        <h2 className="text-xl mb-3">Welcome Back</h2>
--        <p className="text-slate/80 leading-relaxed">
-+      <motion.section variants={item} className="bg-surface/50 border border-border/30 backdrop-blur-sm rounded-card p-6 mb-8 relative overflow-hidden">
-+        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -mr-16 -mt-16" />
+-            <section className="space-y-3">
++            <section className="space-y-3 mb-8">
+                 {[
+                     { label: "Settings", icon: "⚙️" },
+                     { label: "Notifications", icon: "🔔" },
+@@ -18,14 +20,17 @@ export default function ProfilePage() {
+                 ].map((item) => (
+                     <div
+                         key={item.label}
+-                        className="bg-sand rounded-card p-4 flex items-center gap-4"
++                        className="bg-sand rounded-card p-4 flex items-center gap-4 cursor-pointer hover:bg-sand/80 transition-colors"
+                     >
+                         <span className="text-xl">{item.icon}</span>
+-                        <span className="font-medium flex-1">{item.label}</span>
++                        <span className="font-medium flex-1 text-text-primary">{item.label}</span>
+                         <span className="text-slate/40">→</span>
+                     </div>
+                 ))}
+             </section>
 +
-+        <h2 className="text-2xl font-semibold mb-3 text-text-primary relative z-10">Welcome Back</h2>
-+        <p className="text-text-secondary leading-relaxed relative z-10">
-           Continue your path to mindfulness and inner peace.
-           Your journey awaits.
-         </p>
--      </section>
-+      </motion.section>
- 
-       {/* Quick Actions */}
--      <section className="grid grid-cols-2 gap-4">
--        <div className="bg-sand rounded-card p-4 text-center">
--          <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-sage/20 flex items-center justify-center">
--            <span className="text-sage text-xl">📚</span>
-+      <motion.section variants={item} className="grid grid-cols-2 gap-4 mb-10">
-+        <div className="bg-surface/50 border border-border/30 hover:border-primary/30 transition-colors rounded-card p-5 text-center group cursor-pointer">
-+          <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-background border border-border/30 flex items-center justify-center group-hover:bg-primary/10 group-hover:border-primary/50 transition-all duration-300">
-+            <span className="text-2xl grayscale group-hover:grayscale-0 transition-all">📚</span>
-           </div>
--          <h3 className="font-medium mb-1">Library</h3>
--          <p className="text-sm text-slate/60">12 resources</p>
-+          <h3 className="font-medium mb-1 text-text-primary">Library</h3>
-+          <p className="text-xs text-text-secondary">12 resources</p>
++            {/* 🛠️ Debug Tool สำหรับ Manual Verify */}
++            <DebugProgressControl />
          </div>
- 
--        <div className="bg-sand rounded-card p-4 text-center">
--          <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-sage/20 flex items-center justify-center">
--            <span className="text-sage text-xl">🎓</span>
-+        <div className="bg-surface/50 border border-border/30 hover:border-primary/30 transition-colors rounded-card p-5 text-center group cursor-pointer">
-+          <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-background border border-border/30 flex items-center justify-center group-hover:bg-primary/10 group-hover:border-primary/50 transition-all duration-300">
-+            <span className="text-2xl grayscale group-hover:grayscale-0 transition-all">🎓</span>
-           </div>
--          <h3 className="font-medium mb-1">Courses</h3>
--          <p className="text-sm text-slate/60">3 in progress</p>
-+          <h3 className="font-medium mb-1 text-text-primary">Courses</h3>
-+          <p className="text-xs text-text-secondary">3 in progress</p>
-         </div>
--      </section>
-+      </motion.section>
- 
-       {/* Recent Activity */}
--      <section className="mt-8">
--        <h2 className="text-xl mb-4">Recent Activity</h2>
-+      <motion.section variants={item}>
-+        <div className="flex items-center justify-between mb-4">
-+          <h2 className="text-xl font-semibold text-text-primary">Recent Activity</h2>
-+          <button className="text-sm text-primary hover:text-primary/80 transition-colors">View all</button>
-+        </div>
-+
-         <div className="space-y-3">
--          {[1, 2, 3].map((item) => (
-+          {[1, 2, 3].map((i) => (
-             <div
--              key={item}
--              className="bg-sand rounded-card p-4 flex items-center gap-4"
-+              key={i}
-+              className="bg-surface/30 border border-border/30 rounded-card p-4 flex items-center gap-4 hover:bg-surface/50 transition-colors cursor-pointer"
-             >
--              <div className="w-10 h-10 rounded-full bg-sage/20 flex-shrink-0" />
-+              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 text-primary">
-+                ✨
-+              </div>
-               <div className="flex-1 min-w-0">
--                <p className="font-medium truncate">Activity Item {item}</p>
--                <p className="text-sm text-slate/60">Just now</p>
-+                <p className="font-medium truncate text-text-primary">Daily Meditation {i}</p>
-+                <p className="text-sm text-text-secondary">Just now</p>
-               </div>
-+              <div className="w-2 h-2 rounded-full bg-primary" />
-             </div>
-           ))}
-         </div>
--      </section>
--    </div>
-+      </motion.section>
-+    </motion.div>
-   );
+     );
  }
-diff --git a/components/ThemeProvider.tsx b/components/ThemeProvider.tsx
+diff --git a/components/DebugProgressControl.tsx b/components/DebugProgressControl.tsx
 new file mode 100644
-index 0000000..626fd87
+index 0000000..d8dd8ec
 --- /dev/null
-+++ b/components/ThemeProvider.tsx
-@@ -0,0 +1,33 @@
++++ b/components/DebugProgressControl.tsx
+@@ -0,0 +1,64 @@
 +"use client";
 +
-+import { createContext, useContext, ReactNode } from "react";
-+import { useTheme, ThemeMode } from "@/hooks/useTheme";
++import { useProgress } from "@/components/ProgressProvider";
++import { motion } from "framer-motion";
 +
-+interface ThemeContextType {
-+    theme: ThemeMode;
-+    isDark: boolean;
-+    isLight: boolean;
-+    toggleTheme: () => void;
-+    setTheme: (mode: ThemeMode) => void;
-+    mounted: boolean;
-+}
-+
-+const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
-+
-+export function ThemeProvider({ children }: { children: ReactNode }) {
-+    const themeState = useTheme();
++export function DebugProgressControl() {
++    const {
++        progress,
++        completeLesson,
++        toggleBookmark,
++        setLanguage,
++        resetProgress,
++    } = useProgress();
 +
 +    return (
-+        <ThemeContext.Provider value={themeState}>
++        <div className="p-4 rounded-lg border border-border/50 bg-surface/50 text-sm space-y-4">
++            <h3 className="font-semibold text-primary">🛠️ Debug: Persistence Control</h3>
++
++            {/* 1. View Data */}
++            <div className="bg-black/5 p-3 rounded font-mono text-xs overflow-x-auto whitespace-pre-wrap dark:bg-black/30">
++                {JSON.stringify(progress, null, 2)}
++            </div>
++
++            {/* 2. Controls */}
++            <div className="grid grid-cols-2 gap-2">
++                <motion.button
++                    whileTap={{ scale: 0.95 }}
++                    onClick={() => completeLesson(`lesson-${Date.now()}`)}
++                    className="bg-primary/10 text-primary px-3 py-2 rounded hover:bg-primary/20"
++                >
++                    ✅ Complete Lesson (Random)
++                </motion.button>
++
++                <motion.button
++                    whileTap={{ scale: 0.95 }}
++                    onClick={() => toggleBookmark("bookmark-demo")}
++                    className="bg-primary/10 text-primary px-3 py-2 rounded hover:bg-primary/20"
++                >
++                    🔖 Toggle Bookmark
++                </motion.button>
++
++                <motion.button
++                    whileTap={{ scale: 0.95 }}
++                    onClick={() => setLanguage(progress.language === "th" ? "en" : "th")}
++                    className="bg-primary/10 text-primary px-3 py-2 rounded hover:bg-primary/20"
++                >
++                    🌐 Toggle Lang ({progress.language})
++                </motion.button>
++
++                <motion.button
++                    whileTap={{ scale: 0.95 }}
++                    onClick={resetProgress}
++                    className="bg-red-500/10 text-red-500 px-3 py-2 rounded hover:bg-red-500/20 col-span-2 border border-red-500/20"
++                >
++                    ⚠️ Reset All Data
++                </motion.button>
++            </div>
++
++            <p className="text-xs text-slate-500 mt-2">
++                * กดปุ่มแล้วลอง Refresh หน้าเว็บ (data ต้องยังอยู่)
++            </p>
++        </div>
++    );
++}
+diff --git a/components/ProgressProvider.tsx b/components/ProgressProvider.tsx
+new file mode 100644
+index 0000000..1784747
+--- /dev/null
++++ b/components/ProgressProvider.tsx
+@@ -0,0 +1,149 @@
++"use client";
++
++import {
++    createContext,
++    useContext,
++    useReducer,
++    useEffect,
++    useCallback,
++    useRef,
++    ReactNode,
++} from "react";
++import { UserProgress, DEFAULT_PROGRESS } from "@/lib/types/progress";
++import { saveProgress, loadProgress, clearProgress } from "@/lib/services";
++
++// ─── Context Type ──────────────────────────────────────
++
++interface ProgressContextType {
++    progress: UserProgress;
++    completeLesson: (lessonId: string) => void;
++    toggleBookmark: (lessonId: string) => void;
++    setThemeMode: (mode: "light" | "dark") => void;
++    setLanguage: (lang: "th" | "en") => void;
++    resetProgress: () => void;
++}
++
++const ProgressContext = createContext<ProgressContextType | undefined>(
++    undefined
++);
++
++// ─── Reducer ───────────────────────────────────────────
++
++type ProgressAction =
++    | { type: "LOAD"; payload: UserProgress }
++    | { type: "COMPLETE_LESSON"; payload: string }
++    | { type: "TOGGLE_BOOKMARK"; payload: string }
++    | { type: "SET_THEME"; payload: "light" | "dark" }
++    | { type: "SET_LANGUAGE"; payload: "th" | "en" }
++    | { type: "RESET" };
++
++function progressReducer(
++    state: UserProgress,
++    action: ProgressAction
++): UserProgress {
++    switch (action.type) {
++        case "LOAD":
++            return action.payload;
++
++        case "COMPLETE_LESSON":
++            // ไม่ให้ lesson ซ้ำ
++            if (state.completedLessons.includes(action.payload)) return state;
++            return {
++                ...state,
++                completedLessons: [...state.completedLessons, action.payload],
++                lastVisited: new Date().toISOString(),
++            };
++
++        case "TOGGLE_BOOKMARK":
++            return {
++                ...state,
++                bookmarks: state.bookmarks.includes(action.payload)
++                    ? state.bookmarks.filter((id) => id !== action.payload)
++                    : [...state.bookmarks, action.payload],
++                lastVisited: new Date().toISOString(),
++            };
++
++        case "SET_THEME":
++            return { ...state, themeMode: action.payload };
++
++        case "SET_LANGUAGE":
++            return { ...state, language: action.payload };
++
++        case "RESET":
++            return { ...DEFAULT_PROGRESS };
++
++        default:
++            return state;
++    }
++}
++
++// ─── Provider ──────────────────────────────────────────
++
++export function ProgressProvider({ children }: { children: ReactNode }) {
++    const [progress, dispatch] = useReducer(progressReducer, DEFAULT_PROGRESS);
++    const isInitialMount = useRef(true);
++
++    // โหลด data จาก localStorage ตอน mount
++    useEffect(() => {
++        const saved = loadProgress();
++        if (saved) {
++            dispatch({ type: "LOAD", payload: saved });
++        }
++        // เปิด auto-save หลัง initial load (setTimeout ให้ LOAD render ก่อน)
++        setTimeout(() => {
++            isInitialMount.current = false;
++        }, 0);
++    }, []);
++
++    // Auto-save ทุกครั้งที่ progress เปลี่ยน (ข้าม initial mount)
++    useEffect(() => {
++        if (isInitialMount.current) return;
++        saveProgress(progress);
++    }, [progress]);
++
++    const completeLesson = useCallback((lessonId: string) => {
++        dispatch({ type: "COMPLETE_LESSON", payload: lessonId });
++    }, []);
++
++    const toggleBookmark = useCallback((lessonId: string) => {
++        dispatch({ type: "TOGGLE_BOOKMARK", payload: lessonId });
++    }, []);
++
++    const setThemeMode = useCallback((mode: "light" | "dark") => {
++        dispatch({ type: "SET_THEME", payload: mode });
++    }, []);
++
++    const setLanguage = useCallback((lang: "th" | "en") => {
++        dispatch({ type: "SET_LANGUAGE", payload: lang });
++    }, []);
++
++    const resetProgress = useCallback(() => {
++        clearProgress();
++        dispatch({ type: "RESET" });
++    }, []);
++
++    return (
++        <ProgressContext.Provider
++            value={{
++                progress,
++                completeLesson,
++                toggleBookmark,
++                setThemeMode,
++                setLanguage,
++                resetProgress,
++            }}
++        >
 +            {children}
-+        </ThemeContext.Provider>
++        </ProgressContext.Provider>
 +    );
 +}
 +
-+export function useThemeContext() {
-+    const context = useContext(ThemeContext);
++// ─── Hook ──────────────────────────────────────────────
++
++export function useProgress(): ProgressContextType {
++    const context = useContext(ProgressContext);
 +    if (context === undefined) {
-+        throw new Error("useThemeContext must be used within a ThemeProvider");
++        throw new Error("useProgress must be used within a ProgressProvider");
 +    }
 +    return context;
 +}
-diff --git a/components/ThemeToggle.tsx b/components/ThemeToggle.tsx
-new file mode 100644
-index 0000000..d6f6065
---- /dev/null
-+++ b/components/ThemeToggle.tsx
-@@ -0,0 +1,40 @@
-+"use client";
+diff --git a/components/ThemeProvider.tsx b/components/ThemeProvider.tsx
+index 626fd87..095799a 100644
+--- a/components/ThemeProvider.tsx
++++ b/components/ThemeProvider.tsx
+@@ -1,7 +1,8 @@
+ "use client";
+ 
+-import { createContext, useContext, ReactNode } from "react";
++import { createContext, useContext, useEffect, ReactNode } from "react";
+ import { useTheme, ThemeMode } from "@/hooks/useTheme";
++import { useProgress } from "@/components/ProgressProvider";
+ 
+ interface ThemeContextType {
+     theme: ThemeMode;
+@@ -16,6 +17,21 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+ 
+ export function ThemeProvider({ children }: { children: ReactNode }) {
+     const themeState = useTheme();
++    const { progress, setThemeMode } = useProgress();
 +
-+import { motion } from "framer-motion";
-+import { Sun, Moon } from "lucide-react";
-+import { useThemeContext } from "@/components/ThemeProvider";
++    // Sync: เมื่อ progress โหลดค่า theme จาก persistence → set ให้ useTheme
++    useEffect(() => {
++        if (progress.themeMode !== themeState.theme) {
++            themeState.setTheme(progress.themeMode);
++        }
++    }, [progress.themeMode, themeState.theme, themeState.setTheme]);
 +
-+export function ThemeToggle() {
-+    const { isDark, toggleTheme, mounted } = useThemeContext();
-+
-+    // Prevent hydration mismatch
-+    if (!mounted) {
-+        return (
-+            <div className="w-10 h-10 rounded-full bg-surface/50" />
-+        );
-+    }
-+
-+    return (
-+        <motion.button
-+            onClick={toggleTheme}
-+            className="relative w-10 h-10 rounded-full bg-surface/50 border border-border/30 flex items-center justify-center hover:bg-surface transition-colors"
-+            whileTap={{ scale: 0.9 }}
-+            whileHover={{ scale: 1.05 }}
-+            aria-label={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
-+        >
-+            <motion.div
-+                key={isDark ? "moon" : "sun"}
-+                initial={{ rotate: -90, opacity: 0 }}
-+                animate={{ rotate: 0, opacity: 1 }}
-+                exit={{ rotate: 90, opacity: 0 }}
-+                transition={{ duration: 0.3, ease: "easeInOut" }}
-+            >
-+                {isDark ? (
-+                    <Sun className="w-5 h-5 text-primary" />
-+                ) : (
-+                    <Moon className="w-5 h-5 text-primary" />
-+                )}
-+            </motion.div>
-+        </motion.button>
-+    );
-+}
-diff --git a/components/layout/MobileNavigation.tsx b/components/layout/MobileNavigation.tsx
-index 4a47c2f..e939828 100644
---- a/components/layout/MobileNavigation.tsx
-+++ b/components/layout/MobileNavigation.tsx
-@@ -22,7 +22,8 @@ export function MobileNavigation() {
-     const pathname = usePathname();
++    // Sync: เมื่อ useTheme toggle → บันทึกกลับไป progress
++    useEffect(() => {
++        if (themeState.theme !== progress.themeMode) {
++            setThemeMode(themeState.theme);
++        }
++    }, [themeState.theme, progress.themeMode, setThemeMode]);
  
      return (
--        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-sand/95 backdrop-blur-md border-t border-slate/10">
-+        <nav className="fixed bottom-0 left-0 right-0 z-50 backdrop-blur-xl border-t border-border/30"
-+            style={{ backgroundColor: "var(--nav-bg)" }}>
-             <div className="flex items-center justify-around h-16 px-4 pb-[env(safe-area-inset-bottom)]">
-                 {navItems.map((item) => {
-                     const isActive = pathname === item.href ||
-@@ -42,16 +43,16 @@ export function MobileNavigation() {
-                                 {isActive && (
-                                     <motion.div
-                                         layoutId="activeTab"
--                                        className="absolute -top-1 w-8 h-1 rounded-full bg-sage"
-+                                        className="absolute -top-1 w-8 h-1 rounded-full bg-primary shadow-[0_0_10px_var(--primary)]"
-                                         transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                                     />
-                                 )}
-                                 <Icon
--                                    className={`w-6 h-6 transition-colors duration-200 ${isActive ? "text-sage" : "text-slate/50"
-+                                    className={`w-6 h-6 transition-colors duration-200 ${isActive ? "text-primary drop-shadow-[0_0_8px_rgba(var(--primary),0.5)]" : "text-text-secondary/60 hover:text-text-primary"
-                                         }`}
-                                 />
-                                 <span
--                                    className={`text-xs font-medium transition-colors duration-200 ${isActive ? "text-sage" : "text-slate/50"
-+                                    className={`text-[10px] font-medium transition-colors duration-200 ${isActive ? "text-primary" : "text-text-secondary/60"
-                                         }`}
-                                 >
-                                     {item.label}
-diff --git a/hooks/useTheme.ts b/hooks/useTheme.ts
+         <ThemeContext.Provider value={themeState}>
+diff --git a/components/__tests__/ProgressProvider.test.tsx b/components/__tests__/ProgressProvider.test.tsx
 new file mode 100644
-index 0000000..892c7ea
+index 0000000..ed36af2
 --- /dev/null
-+++ b/hooks/useTheme.ts
-@@ -0,0 +1,46 @@
-+"use client";
++++ b/components/__tests__/ProgressProvider.test.tsx
+@@ -0,0 +1,200 @@
++import { describe, it, expect, beforeEach, vi } from "vitest";
++import { renderHook, act } from "@testing-library/react";
++import { ReactNode } from "react";
++import { ProgressProvider, useProgress } from "../ProgressProvider";
 +
-+import { useState, useEffect, useCallback } from "react";
++// ===================================================================
++// 🟥 RED Phase: Failing Tests สำหรับ ProgressProvider
++// ทดสอบการ integrate PersistenceService กับ React Context
++// ===================================================================
 +
-+export type ThemeMode = "light" | "dark";
++// Mock localStorage
++const store: Record<string, string> = {};
++const localStorageMock = {
++    getItem: vi.fn((key: string) => store[key] ?? null),
++    setItem: vi.fn((key: string, value: string) => {
++        store[key] = value;
++    }),
++    removeItem: vi.fn((key: string) => {
++        delete store[key];
++    }),
++    clear: vi.fn(() => {
++        Object.keys(store).forEach((key) => delete store[key]);
++    }),
++    get length() {
++        return Object.keys(store).length;
++    },
++    key: vi.fn((index: number) => Object.keys(store)[index] ?? null),
++};
 +
-+const STORAGE_KEY = "theme-mode";
-+const DEFAULT_THEME: ThemeMode = "light";
++Object.defineProperty(globalThis, "localStorage", {
++    value: localStorageMock,
++});
 +
-+export function useTheme() {
-+    const [theme, setThemeState] = useState<ThemeMode>(DEFAULT_THEME);
-+    const [mounted, setMounted] = useState(false);
-+
-+    // Read from localStorage on mount
-+    useEffect(() => {
-+        const stored = localStorage.getItem(STORAGE_KEY) as ThemeMode | null;
-+        if (stored === "light" || stored === "dark") {
-+            setThemeState(stored);
-+        }
-+        setMounted(true);
-+    }, []);
-+
-+    // Apply theme to document
-+    useEffect(() => {
-+        if (!mounted) return;
-+        document.documentElement.setAttribute("data-theme", theme);
-+        localStorage.setItem(STORAGE_KEY, theme);
-+    }, [theme, mounted]);
-+
-+    const toggleTheme = useCallback(() => {
-+        setThemeState((prev) => (prev === "dark" ? "light" : "dark"));
-+    }, []);
-+
-+    const setTheme = useCallback((mode: ThemeMode) => {
-+        setThemeState(mode);
-+    }, []);
-+
-+    return {
-+        theme,
-+        isDark: theme === "dark",
-+        isLight: theme === "light",
-+        toggleTheme,
-+        setTheme,
-+        mounted,
-+    };
++function wrapper({ children }: { children: ReactNode }) {
++    return <ProgressProvider>{children}</ProgressProvider>;
 +}
++
++describe("ProgressProvider + useProgress", () => {
++    beforeEach(() => {
++        localStorageMock.clear();
++        vi.clearAllMocks();
++    });
++
++    // ─── Initialization ──────────────────────────────────
++
++    it("ควรให้ค่า default เมื่อไม่มี saved data", () => {
++        const { result } = renderHook(() => useProgress(), { wrapper });
++
++        expect(result.current.progress.version).toBe(1);
++        expect(result.current.progress.themeMode).toBe("light");
++        expect(result.current.progress.language).toBe("th");
++        expect(result.current.progress.completedLessons).toEqual([]);
++        expect(result.current.progress.bookmarks).toEqual([]);
++    });
++
++    it("ควรโหลด saved data จาก localStorage ตอน mount", () => {
++        const saved = {
++            version: 1,
++            themeMode: "dark" as const,
++            language: "en" as const,
++            completedLessons: ["lesson-1"],
++            bookmarks: [],
++            lastVisited: "2026-02-10T18:00:00Z",
++        };
++        localStorageMock.setItem("theMiddleWay.progress", JSON.stringify(saved));
++
++        const { result } = renderHook(() => useProgress(), { wrapper });
++
++        expect(result.current.progress.themeMode).toBe("dark");
++        expect(result.current.progress.language).toBe("en");
++        expect(result.current.progress.completedLessons).toEqual(["lesson-1"]);
++    });
++
++    // ─── Lesson Completion ───────────────────────────────
++
++    it("ควร mark lesson ว่า completed ได้", () => {
++        const { result } = renderHook(() => useProgress(), { wrapper });
++
++        act(() => {
++            result.current.completeLesson("lesson-2-eightfold-path");
++        });
++
++        expect(result.current.progress.completedLessons).toContain(
++            "lesson-2-eightfold-path"
++        );
++    });
++
++    it("ไม่ควร duplicate lesson ที่ completed แล้ว", () => {
++        const { result } = renderHook(() => useProgress(), { wrapper });
++
++        act(() => {
++            result.current.completeLesson("lesson-1");
++            result.current.completeLesson("lesson-1");
++        });
++
++        expect(
++            result.current.progress.completedLessons.filter((l) => l === "lesson-1")
++                .length
++        ).toBe(1);
++    });
++
++    // ─── Bookmarks ───────────────────────────────────────
++
++    it("ควร toggle bookmark ได้ (เพิ่ม)", () => {
++        const { result } = renderHook(() => useProgress(), { wrapper });
++
++        act(() => {
++            result.current.toggleBookmark("lesson-3");
++        });
++
++        expect(result.current.progress.bookmarks).toContain("lesson-3");
++    });
++
++    it("ควร toggle bookmark ได้ (ลบ)", () => {
++        const { result } = renderHook(() => useProgress(), { wrapper });
++
++        act(() => {
++            result.current.toggleBookmark("lesson-3");
++        });
++        act(() => {
++            result.current.toggleBookmark("lesson-3");
++        });
++
++        expect(result.current.progress.bookmarks).not.toContain("lesson-3");
++    });
++
++    // ─── Theme ───────────────────────────────────────────
++
++    it("ควร update themeMode ได้", () => {
++        const { result } = renderHook(() => useProgress(), { wrapper });
++
++        act(() => {
++            result.current.setThemeMode("dark");
++        });
++
++        expect(result.current.progress.themeMode).toBe("dark");
++    });
++
++    // ─── Language ────────────────────────────────────────
++
++    it("ควร update language ได้", () => {
++        const { result } = renderHook(() => useProgress(), { wrapper });
++
++        act(() => {
++            result.current.setLanguage("en");
++        });
++
++        expect(result.current.progress.language).toBe("en");
++    });
++
++    // ─── Reset ───────────────────────────────────────────
++
++    it("ควร reset progress กลับเป็น default ได้", () => {
++        const { result } = renderHook(() => useProgress(), { wrapper });
++
++        act(() => {
++            result.current.completeLesson("lesson-1");
++            result.current.setThemeMode("dark");
++        });
++        act(() => {
++            result.current.resetProgress();
++        });
++
++        expect(result.current.progress.themeMode).toBe("light");
++        expect(result.current.progress.completedLessons).toEqual([]);
++    });
++
++    // ─── Auto-save ───────────────────────────────────────
++
++    it("ควร auto-save ลง localStorage เมื่อ progress เปลี่ยน", () => {
++        vi.useFakeTimers();
++        const { result } = renderHook(() => useProgress(), { wrapper });
++
++        // flush setTimeout(0) ภายใน ProgressProvider ที่ปิด isInitialMount flag
++        act(() => {
++            vi.advanceTimersByTime(1);
++        });
++
++        vi.clearAllMocks(); // เคลียร์ calls จาก initial load
++
++        act(() => {
++            result.current.completeLesson("lesson-1");
++        });
++
++        expect(localStorage.setItem).toHaveBeenCalledWith(
++            "theMiddleWay.progress",
++            expect.stringContaining("lesson-1")
++        );
++
++        vi.useRealTimers();
++    });
++
++    // ─── Error: useProgress outside Provider ─────────────
++
++    it("ควร throw error ถ้าเรียก useProgress นอก Provider", () => {
++        expect(() => {
++            renderHook(() => useProgress());
++        }).toThrow("useProgress must be used within a ProgressProvider");
++    });
++});
+diff --git a/hooks/useTheme.ts b/hooks/useTheme.ts
+index 892c7ea..a247165 100644
+--- a/hooks/useTheme.ts
++++ b/hooks/useTheme.ts
+@@ -11,12 +11,8 @@ export function useTheme() {
+     const [theme, setThemeState] = useState<ThemeMode>(DEFAULT_THEME);
+     const [mounted, setMounted] = useState(false);
+ 
+-    // Read from localStorage on mount
++    // Set mounted state
+     useEffect(() => {
+-        const stored = localStorage.getItem(STORAGE_KEY) as ThemeMode | null;
+-        if (stored === "light" || stored === "dark") {
+-            setThemeState(stored);
+-        }
+         setMounted(true);
+     }, []);
+ 
+@@ -24,7 +20,6 @@ export function useTheme() {
+     useEffect(() => {
+         if (!mounted) return;
+         document.documentElement.setAttribute("data-theme", theme);
+-        localStorage.setItem(STORAGE_KEY, theme);
+     }, [theme, mounted]);
+ 
+     const toggleTheme = useCallback(() => {
+diff --git a/lib/services/__tests__/persistenceService.test.ts b/lib/services/__tests__/persistenceService.test.ts
+new file mode 100644
+index 0000000..1001627
+--- /dev/null
++++ b/lib/services/__tests__/persistenceService.test.ts
+@@ -0,0 +1,144 @@
++import { describe, it, expect, beforeEach, vi } from "vitest";
++import {
++    saveProgress,
++    loadProgress,
++    clearProgress,
++} from "../persistenceService";
++import { UserProgress, DEFAULT_PROGRESS, STORAGE_KEY } from "../../types/progress";
++
++// ===================================================================
++// 🟥 RED Phase: Failing Tests
++// ทดสอบ PersistenceService ทั้ง 3 methods: save, load, clear
++// ===================================================================
++
++// Mock localStorage
+
+... (Diff truncated for size) ...
 
 PR TEMPLATE:
 
