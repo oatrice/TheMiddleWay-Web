@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.0] - 2026-02-11
+
+### Added
+
+- **Admin Content Management:** Introduced a new page for administrators to bulk-upload course content using a CSV file.
+- **Backend API Integration:** Integrated the frontend with the Go backend service to process and store uploaded content, migrating the logic from the client.
+- **Deployment Automation:** Implemented new CI/CD workflows to automatically create Git tags on version updates and to generate version-specific deployment URLs on Vercel.
+
 ## [0.3.0] - 2026-02-11
 
 ### Added
