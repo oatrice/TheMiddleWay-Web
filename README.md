@@ -58,6 +58,43 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 | `npm run build` | Build for production |
 | `npm run start` | Start production server |
 | `npm run lint` | Run ESLint |
+| `npm run test` | Run unit tests |
+
+## Runtime URLs
+
+The web app exposes helpers to resolve URLs for `prod`, `preview`, `dev`, `commit`, `version`, and `tag`.
+
+Server-side helper:
+`lib/runtime/appInfo.ts`
+
+Client-side helper:
+`lib/runtime/publicAppInfo.ts`
+
+Optional env vars (server):
+- `APP_URL_PROD`
+- `APP_URL_PREVIEW`
+- `APP_URL_DEV`
+- `APP_URL_COMMIT`
+- `APP_URL_VERSION`
+- `APP_URL_TAG`
+- `APP_VERSION`
+- `APP_GIT_TAG`
+
+Client equivalents (if needed on the browser):
+- `NEXT_PUBLIC_APP_URL_PROD`
+- `NEXT_PUBLIC_APP_URL_PREVIEW`
+- `NEXT_PUBLIC_APP_URL_DEV`
+- `NEXT_PUBLIC_APP_URL_COMMIT`
+- `NEXT_PUBLIC_APP_URL_VERSION`
+- `NEXT_PUBLIC_APP_URL_TAG`
+- `NEXT_PUBLIC_APP_VERSION`
+- `NEXT_PUBLIC_APP_GIT_TAG`
+
+On Vercel, the helpers automatically fall back to system env vars such as
+`VERCEL_ENV`, `VERCEL_URL`, `VERCEL_BRANCH_URL`, `VERCEL_PROJECT_PRODUCTION_URL`,
+`VERCEL_GIT_COMMIT_SHA`, and `VERCEL_GIT_COMMIT_REF`.
+
+For runtime inspection, `/api/app-info` returns `{ urls, build }`.
 
 ## Documentation
 

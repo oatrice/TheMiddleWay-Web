@@ -1,7 +1,8 @@
 "use client";
 
-import { createContext, useContext, ReactNode } from "react";
+import { createContext, useContext, useEffect, ReactNode } from "react";
 import { useTheme, ThemeMode } from "@/hooks/useTheme";
+import { useProgress } from "@/components/ProgressProvider";
 
 interface ThemeContextType {
     theme: ThemeMode;
@@ -9,13 +10,28 @@ interface ThemeContextType {
     isLight: boolean;
     toggleTheme: () => void;
     setTheme: (mode: ThemeMode) => void;
-    mounted: boolean;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
     const themeState = useTheme();
+    const { theme, setTheme } = themeState;
+    const { progress, setThemeMode } = useProgress();
+
+    // Sync: เมื่อ progress โหลดค่า theme จาก persistence → set ให้ useTheme
+    useEffect(() => {
+        if (progress.themeMode !== theme) {
+            setTheme(progress.themeMode);
+        }
+    }, [progress.themeMode, theme, setTheme]);
+
+    // Sync: เมื่อ useTheme toggle → บันทึกกลับไป progress
+    useEffect(() => {
+        if (theme !== progress.themeMode) {
+            setThemeMode(theme);
+        }
+    }, [theme, progress.themeMode, setThemeMode]);
 
     return (
         <ThemeContext.Provider value={themeState}>

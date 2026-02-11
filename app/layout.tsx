@@ -3,6 +3,8 @@ import { Outfit, Inter } from "next/font/google";
 import "./globals.css";
 import { MobileNavigation } from "@/components/layout/MobileNavigation";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { ProgressProvider } from "@/components/ProgressProvider";
+import { getMetadataBase } from "@/lib/runtime/appInfo";
 
 const outfit = Outfit({
   variable: "--font-outfit",
@@ -19,6 +21,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "The Middle Way",
   description: "Find balance in your journey",
+  metadataBase: getMetadataBase(),
 };
 
 export const viewport: Viewport = {
@@ -38,12 +41,14 @@ export default function RootLayout({
       <body
         className={`${outfit.variable} ${inter.variable} antialiased`}
       >
-        <ThemeProvider>
-          <main className="pb-safe min-h-screen">
-            {children}
-          </main>
-          <MobileNavigation />
-        </ThemeProvider>
+        <ProgressProvider>
+          <ThemeProvider>
+            <main className="pb-safe min-h-screen">
+              {children}
+            </main>
+            <MobileNavigation />
+          </ThemeProvider>
+        </ProgressProvider>
       </body>
     </html>
   );

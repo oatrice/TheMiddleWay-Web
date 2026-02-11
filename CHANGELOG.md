@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.3.0] - 2026-02-11
+
+### Added
+
+- Implemented user progress tracking, which automatically saves course and lesson completion status to the browser's local storage.
+- Added a developer debug tool on the Profile page to inspect and manage saved progress data.
+
+### Fixed
+
+- Corrected a dependency issue in the theme initialization hook to ensure theme stability and prevent potential rendering bugs.
+
 ## [0.2.0] - 2026-02-10
 
 ### Added

@@ -1,3 +1,5 @@
+import { DebugProgressControl } from "@/components/DebugProgressControl";
+
 export default function ProfilePage() {
     return (
         <div className="container-mobile py-8">
@@ -9,7 +11,7 @@ export default function ProfilePage() {
                 </p>
             </header>
 
-            <section className="space-y-3">
+            <section className="space-y-3 mb-8">
                 {[
                     { label: "Settings", icon: "⚙️" },
                     { label: "Notifications", icon: "🔔" },
@@ -18,14 +20,17 @@ export default function ProfilePage() {
                 ].map((item) => (
                     <div
                         key={item.label}
-                        className="bg-sand rounded-card p-4 flex items-center gap-4"
+                        className="bg-sand rounded-card p-4 flex items-center gap-4 cursor-pointer hover:bg-sand/80 transition-colors"
                     >
                         <span className="text-xl">{item.icon}</span>
-                        <span className="font-medium flex-1">{item.label}</span>
+                        <span className="font-medium flex-1 text-text-primary">{item.label}</span>
                         <span className="text-slate/40">→</span>
                     </div>
                 ))}
             </section>
+
+            {/* 🛠️ Debug Tool สำหรับ Manual Verify */}
+            <DebugProgressControl />
         </div>
     );
 }
