@@ -24,16 +24,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         if (progress.themeMode !== themeState.theme) {
             themeState.setTheme(progress.themeMode);
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [progress.themeMode]);
+    }, [progress.themeMode, themeState.theme, themeState.setTheme]);
 
     // Sync: เมื่อ useTheme toggle → บันทึกกลับไป progress
     useEffect(() => {
         if (themeState.theme !== progress.themeMode) {
             setThemeMode(themeState.theme);
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [themeState.theme]);
+    }, [themeState.theme, progress.themeMode, setThemeMode]);
 
     return (
         <ThemeContext.Provider value={themeState}>

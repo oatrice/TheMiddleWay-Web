@@ -11,21 +11,15 @@ export function useTheme() {
     const [theme, setThemeState] = useState<ThemeMode>(DEFAULT_THEME);
     const [mounted, setMounted] = useState(false);
 
-    // Read from localStorage on mount
+    // Set mounted state
     useEffect(() => {
-        const stored = localStorage.getItem(STORAGE_KEY) as ThemeMode | null;
-        if (stored === "light" || stored === "dark") {
-            setThemeState(stored);
-        }
         setMounted(true);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // Apply theme to document
     useEffect(() => {
         if (!mounted) return;
         document.documentElement.setAttribute("data-theme", theme);
-        localStorage.setItem(STORAGE_KEY, theme);
     }, [theme, mounted]);
 
     const toggleTheme = useCallback(() => {
