@@ -2,632 +2,539 @@
 
 You are an AI assistant helping to create a Pull Request description.
     
-TASK: [Infrastructure] Persistence Layer: LocalStorage System for Progress Tracking
+TASK: [Data] CSV Data Ingestion & Logic: Mapping 11 Categories and 8-Week Content
 ISSUE: {
-  "title": "[Infrastructure] Persistence Layer: LocalStorage System for Progress Tracking",
-  "number": 6
+  "title": "[Data] CSV Data Ingestion & Logic: Mapping 11 Categories and 8-Week Content",
+  "number": 5
 }
 
 GIT CONTEXT:
 COMMITS:
-33f3eac feat: [Infrastructure] Persistence Layer: LocalStorage S...
-6546f36 ci(web): add test step to CI workflow and update review docs
-a5afd98 feat(profile): add debug tool to verify progress persistence
-d66611b feat(progress): add user progress provider with localStorage sync
-ba895bd test(persistence): add unit tests for localStorage progress operations
-6c21930 fix: ignore exhaustive-deps for theme initialization
-c9070a5 ci: add workflow_dispatch trigger
-a2963a5 ci: add web build workflow
+a137844 feat(admin): add CSV content upload, backend integration, and CI/CD
+045028d docs: update code review report with CSV processor and workflow findings
+ae7c819 refactor: apply code review feedback (csv logic, ci script)
+63d12c6 feat: integrate Go backend API for content upload #5
+4330637 refactor(admin): migrate CSV processing to Go backend
+4fb3718 feat(admin): add content management page with CSV upload
+cccc0ab chore: add .env*.local to .gitignore
+a3950ec ci: add Vercel version alias workflow for tag-based URLs
+77eede4 ci: add auto-tag workflow on version change
 
 STATS:
-.github/workflows/web-ci.yml                      |   34 +
- CHANGELOG.md                                      |   11 +
- README.md                                         |    1 +
- app/layout.tsx                                    |   15 +-
- app/profile/page.tsx                              |   11 +-
- code_review.md                                    |  101 +-
- components/DebugProgressControl.tsx               |   64 +
- components/ProgressProvider.tsx                   |  149 +
- components/ThemeProvider.tsx                      |   18 +-
- components/__tests__/ProgressProvider.test.tsx    |  200 ++
- hooks/useTheme.ts                                 |    7 +-
- lib/services/__tests__/persistenceService.test.ts |  144 +
- lib/services/index.ts                             |    2 +
- lib/services/persistenceService.ts                |   78 +
- lib/types/index.ts                                |    3 +
- lib/types/progress.ts                             |   25 +
- package-lock.json                                 | 3445 +++++++++++++++++----
- package.json                                      |   12 +-
- vitest.config.ts                                  |   14 +
- 19 files changed, 3672 insertions(+), 662 deletions(-)
+.github/workflows/auto-tag.yml             |  48 +++++++++++
+ .github/workflows/vercel-version-alias.yml |  68 +++++++++++++++
+ .gitignore                                 |   1 +
+ CHANGELOG.md                               |   8 ++
+ README.md                                  |   3 +-
+ app/admin/content/page.tsx                 |  64 ++++++++++++++
+ code_review.md                             | 133 +++++++++++++----------------
+ components/admin/CsvUploadForm.tsx         | 112 ++++++++++++++++++++++++
+ lib/constants/categories.ts                |  15 ++++
+ lib/services/contentService.test.ts        |  58 +++++++++++++
+ lib/services/contentService.ts             | 122 ++++++++++++++++++++++++++
+ lib/services/csvProcessor.test.ts          |  50 +++++++++++
+ lib/services/csvProcessor.ts               | 116 +++++++++++++++++++++++++
+ lib/types/content.ts                       |  21 +++++
+ package.json                               |   2 +-
+ 15 files changed, 745 insertions(+), 76 deletions(-)
 
 KEY FILE DIFFS:
-diff --git a/app/layout.tsx b/app/layout.tsx
-index 89d7f5a..6bf0ec4 100644
---- a/app/layout.tsx
-+++ b/app/layout.tsx
-@@ -3,6 +3,7 @@ import { Outfit, Inter } from "next/font/google";
- import "./globals.css";
- import { MobileNavigation } from "@/components/layout/MobileNavigation";
- import { ThemeProvider } from "@/components/ThemeProvider";
-+import { ProgressProvider } from "@/components/ProgressProvider";
- 
- const outfit = Outfit({
-   variable: "--font-outfit",
-@@ -38,12 +39,14 @@ export default function RootLayout({
-       <body
-         className={`${outfit.variable} ${inter.variable} antialiased`}
-       >
--        <ThemeProvider>
--          <main className="pb-safe min-h-screen">
--            {children}
--          </main>
--          <MobileNavigation />
--        </ThemeProvider>
-+        <ProgressProvider>
-+          <ThemeProvider>
-+            <main className="pb-safe min-h-screen">
-+              {children}
-+            </main>
-+            <MobileNavigation />
-+          </ThemeProvider>
-+        </ProgressProvider>
-       </body>
-     </html>
-   );
-diff --git a/app/profile/page.tsx b/app/profile/page.tsx
-index f63dd14..fd55be0 100644
---- a/app/profile/page.tsx
-+++ b/app/profile/page.tsx
-@@ -1,3 +1,5 @@
-+import { DebugProgressControl } from "@/components/DebugProgressControl";
-+
- export default function ProfilePage() {
-     return (
-         <div className="container-mobile py-8">
-@@ -9,7 +11,7 @@ export default function ProfilePage() {
-                 </p>
-             </header>
- 
--            <section className="space-y-3">
-+            <section className="space-y-3 mb-8">
-                 {[
-                     { label: "Settings", icon: "⚙️" },
-                     { label: "Notifications", icon: "🔔" },
-@@ -18,14 +20,17 @@ export default function ProfilePage() {
-                 ].map((item) => (
-                     <div
-                         key={item.label}
--                        className="bg-sand rounded-card p-4 flex items-center gap-4"
-+                        className="bg-sand rounded-card p-4 flex items-center gap-4 cursor-pointer hover:bg-sand/80 transition-colors"
-                     >
-                         <span className="text-xl">{item.icon}</span>
--                        <span className="font-medium flex-1">{item.label}</span>
-+                        <span className="font-medium flex-1 text-text-primary">{item.label}</span>
-                         <span className="text-slate/40">→</span>
-                     </div>
-                 ))}
-             </section>
-+
-+            {/* 🛠️ Debug Tool สำหรับ Manual Verify */}
-+            <DebugProgressControl />
-         </div>
-     );
- }
-diff --git a/components/DebugProgressControl.tsx b/components/DebugProgressControl.tsx
+diff --git a/app/admin/content/page.tsx b/app/admin/content/page.tsx
 new file mode 100644
-index 0000000..d8dd8ec
+index 0000000..aa21104
 --- /dev/null
-+++ b/components/DebugProgressControl.tsx
++++ b/app/admin/content/page.tsx
 @@ -0,0 +1,64 @@
-+"use client";
++'use client';
 +
-+import { useProgress } from "@/components/ProgressProvider";
-+import { motion } from "framer-motion";
++import React from 'react';
++import CsvUploadForm from '@/components/admin/CsvUploadForm';
++import { useThemeContext as useTheme } from '@/components/ThemeProvider';
++import { Upload } from 'lucide-react';
 +
-+export function DebugProgressControl() {
-+    const {
-+        progress,
-+        completeLesson,
-+        toggleBookmark,
-+        setLanguage,
-+        resetProgress,
-+    } = useProgress();
++export default function ContentAdminPage() {
++    const { theme } = useTheme();
 +
 +    return (
-+        <div className="p-4 rounded-lg border border-border/50 bg-surface/50 text-sm space-y-4">
-+            <h3 className="font-semibold text-primary">🛠️ Debug: Persistence Control</h3>
++        <div className={`
++      min-h-screen pt-safe pb-safe
++      ${theme === 'dark' ? 'bg-slate-900 text-slate-50' : 'bg-slate-50 text-slate-900'}
++      transition-colors duration-300
++    `}>
++            <header className="px-6 py-6 border-b border-border bg-card/50 backdrop-blur-xl sticky top-0 z-10 w-full flex items-center justify-between">
++                <h1 className="text-2xl font-bold tracking-tight">Admin Dashboard</h1>
++            </header>
 +
-+            {/* 1. View Data */}
-+            <div className="bg-black/5 p-3 rounded font-mono text-xs overflow-x-auto whitespace-pre-wrap dark:bg-black/30">
-+                {JSON.stringify(progress, null, 2)}
-+            </div>
++            <main className="container max-w-4xl mx-auto p-6 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
++                <section className="space-y-4">
++                    <div className="flex items-center gap-3">
++                        <div className="p-2 bg-primary/10 rounded-lg">
++                            <Upload className="w-6 h-6 text-primary" />
++                        </div>
++                        <div>
++                            <h2 className="text-xl font-semibold">Content Ingestion</h2>
++                            <p className="text-sm text-gray-500 dark:text-gray-400">Manage and upload weekly content via CSV.</p>
++                        </div>
++                    </div>
 +
-+            {/* 2. Controls */}
-+            <div className="grid grid-cols-2 gap-2">
-+                <motion.button
-+                    whileTap={{ scale: 0.95 }}
-+                    onClick={() => completeLesson(`lesson-${Date.now()}`)}
-+                    className="bg-primary/10 text-primary px-3 py-2 rounded hover:bg-primary/20"
-+                >
-+                    ✅ Complete Lesson (Random)
-+                </motion.button>
++                    {/* Form Area using standard HTML instead of shadcn Card */}
++                    <div className="mt-8 bg-card rounded-xl border border-border shadow-sm p-6 bg-white dark:bg-slate-800">
++                        <CsvUploadForm />
++                    </div>
++                </section>
 +
-+                <motion.button
-+                    whileTap={{ scale: 0.95 }}
-+                    onClick={() => toggleBookmark("bookmark-demo")}
-+                    className="bg-primary/10 text-primary px-3 py-2 rounded hover:bg-primary/20"
-+                >
-+                    🔖 Toggle Bookmark
-+                </motion.button>
-+
-+                <motion.button
-+                    whileTap={{ scale: 0.95 }}
-+                    onClick={() => setLanguage(progress.language === "th" ? "en" : "th")}
-+                    className="bg-primary/10 text-primary px-3 py-2 rounded hover:bg-primary/20"
-+                >
-+                    🌐 Toggle Lang ({progress.language})
-+                </motion.button>
-+
-+                <motion.button
-+                    whileTap={{ scale: 0.95 }}
-+                    onClick={resetProgress}
-+                    className="bg-red-500/10 text-red-500 px-3 py-2 rounded hover:bg-red-500/20 col-span-2 border border-red-500/20"
-+                >
-+                    ⚠️ Reset All Data
-+                </motion.button>
-+            </div>
-+
-+            <p className="text-xs text-slate-500 mt-2">
-+                * กดปุ่มแล้วลอง Refresh หน้าเว็บ (data ต้องยังอยู่)
-+            </p>
++                {/* Instructions */}
++                <section className="mt-12 bg-gray-50 dark:bg-slate-800/50 p-6 rounded-xl border border-border/50">
++                    <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-4">CSV Requirements</h3>
++                    <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700 dark:text-gray-300">
++                        <li className="flex items-start gap-2">
++                            <span className="bg-primary/20 text-primary w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold mt-0.5">1</span>
++                            <span>Headers: <code className="bg-gray-200 dark:bg-gray-700 px-1 rounded">Week, Category, Title, Content</code></span>
++                        </li>
++                        <li className="flex items-start gap-2">
++                            <span className="bg-primary/20 text-primary w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold mt-0.5">2</span>
++                            <span>Week: Number 1-8</span>
++                        </li>
++                        <li className="flex items-start gap-2">
++                            <span className="bg-primary/20 text-primary w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold mt-0.5">3</span>
++                            <span>Category: Exact match (Case sensitive)</span>
++                        </li>
++                        <li className="flex items-start gap-2">
++                            <span className="bg-primary/20 text-primary w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold mt-0.5">4</span>
++                            <span>UTF-8 Encoding (Recommended)</span>
++                        </li>
++                    </ul>
++                </section>
++            </main>
 +        </div>
 +    );
 +}
-diff --git a/components/ProgressProvider.tsx b/components/ProgressProvider.tsx
+diff --git a/components/admin/CsvUploadForm.tsx b/components/admin/CsvUploadForm.tsx
 new file mode 100644
-index 0000000..1784747
+index 0000000..4033216
 --- /dev/null
-+++ b/components/ProgressProvider.tsx
-@@ -0,0 +1,149 @@
-+"use client";
++++ b/components/admin/CsvUploadForm.tsx
+@@ -0,0 +1,112 @@
++'use client';
 +
-+import {
-+    createContext,
-+    useContext,
-+    useReducer,
-+    useEffect,
-+    useCallback,
-+    useRef,
-+    ReactNode,
-+} from "react";
-+import { UserProgress, DEFAULT_PROGRESS } from "@/lib/types/progress";
-+import { saveProgress, loadProgress, clearProgress } from "@/lib/services";
++import { useState } from 'react';
++import { uploadContentCsv, UploadResponse } from '@/lib/services/contentService';
++import { CsvValidationError } from '@/lib/types/content';
++import { Loader2, UploadCloud, AlertCircle, CheckCircle } from 'lucide-react';
 +
-+// ─── Context Type ──────────────────────────────────────
++export default function CsvUploadForm() {
++    const [isProcessing, setIsProcessing] = useState(false);
++    const [errors, setErrors] = useState<CsvValidationError[] | null>(null);
++    const [successCount, setSuccessCount] = useState<number | null>(null);
++    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 +
-+interface ProgressContextType {
-+    progress: UserProgress;
-+    completeLesson: (lessonId: string) => void;
-+    toggleBookmark: (lessonId: string) => void;
-+    setThemeMode: (mode: "light" | "dark") => void;
-+    setLanguage: (lang: "th" | "en") => void;
-+    resetProgress: () => void;
-+}
++    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
++        const file = e.target.files?.[0];
++        if (!file) return;
 +
-+const ProgressContext = createContext<ProgressContextType | undefined>(
-+    undefined
-+);
++        // Reset state
++        setIsProcessing(true);
++        setErrors(null);
++        setSuccessCount(null);
++        setErrorMessage(null);
 +
-+// ─── Reducer ───────────────────────────────────────────
++        try {
++            const result: UploadResponse = await uploadContentCsv(file);
 +
-+type ProgressAction =
-+    | { type: "LOAD"; payload: UserProgress }
-+    | { type: "COMPLETE_LESSON"; payload: string }
-+    | { type: "TOGGLE_BOOKMARK"; payload: string }
-+    | { type: "SET_THEME"; payload: "light" | "dark" }
-+    | { type: "SET_LANGUAGE"; payload: "th" | "en" }
-+    | { type: "RESET" };
-+
-+function progressReducer(
-+    state: UserProgress,
-+    action: ProgressAction
-+): UserProgress {
-+    switch (action.type) {
-+        case "LOAD":
-+            return action.payload;
-+
-+        case "COMPLETE_LESSON":
-+            // ไม่ให้ lesson ซ้ำ
-+            if (state.completedLessons.includes(action.payload)) return state;
-+            return {
-+                ...state,
-+                completedLessons: [...state.completedLessons, action.payload],
-+                lastVisited: new Date().toISOString(),
-+            };
-+
-+        case "TOGGLE_BOOKMARK":
-+            return {
-+                ...state,
-+                bookmarks: state.bookmarks.includes(action.payload)
-+                    ? state.bookmarks.filter((id) => id !== action.payload)
-+                    : [...state.bookmarks, action.payload],
-+                lastVisited: new Date().toISOString(),
-+            };
-+
-+        case "SET_THEME":
-+            return { ...state, themeMode: action.payload };
-+
-+        case "SET_LANGUAGE":
-+            return { ...state, language: action.payload };
-+
-+        case "RESET":
-+            return { ...DEFAULT_PROGRESS };
-+
-+        default:
-+            return state;
-+    }
-+}
-+
-+// ─── Provider ──────────────────────────────────────────
-+
-+export function ProgressProvider({ children }: { children: ReactNode }) {
-+    const [progress, dispatch] = useReducer(progressReducer, DEFAULT_PROGRESS);
-+    const isInitialMount = useRef(true);
-+
-+    // โหลด data จาก localStorage ตอน mount
-+    useEffect(() => {
-+        const saved = loadProgress();
-+        if (saved) {
-+            dispatch({ type: "LOAD", payload: saved });
++            if (result.status === 'success') {
++                setSuccessCount(result.count || 0);
++                e.target.value = ''; // Reset file input
++            } else {
++                setErrors(result.errors || []);
++                setErrorMessage(result.message);
++            }
++        } catch (err) {
++            console.error('Upload error:', err);
++            setErrorMessage('Unexpected error processing file.');
++        } finally {
++            setIsProcessing(false);
 +        }
-+        // เปิด auto-save หลัง initial load (setTimeout ให้ LOAD render ก่อน)
-+        setTimeout(() => {
-+            isInitialMount.current = false;
-+        }, 0);
-+    }, []);
-+
-+    // Auto-save ทุกครั้งที่ progress เปลี่ยน (ข้าม initial mount)
-+    useEffect(() => {
-+        if (isInitialMount.current) return;
-+        saveProgress(progress);
-+    }, [progress]);
-+
-+    const completeLesson = useCallback((lessonId: string) => {
-+        dispatch({ type: "COMPLETE_LESSON", payload: lessonId });
-+    }, []);
-+
-+    const toggleBookmark = useCallback((lessonId: string) => {
-+        dispatch({ type: "TOGGLE_BOOKMARK", payload: lessonId });
-+    }, []);
-+
-+    const setThemeMode = useCallback((mode: "light" | "dark") => {
-+        dispatch({ type: "SET_THEME", payload: mode });
-+    }, []);
-+
-+    const setLanguage = useCallback((lang: "th" | "en") => {
-+        dispatch({ type: "SET_LANGUAGE", payload: lang });
-+    }, []);
-+
-+    const resetProgress = useCallback(() => {
-+        clearProgress();
-+        dispatch({ type: "RESET" });
-+    }, []);
++    };
 +
 +    return (
-+        <ProgressContext.Provider
-+            value={{
-+                progress,
-+                completeLesson,
-+                toggleBookmark,
-+                setThemeMode,
-+                setLanguage,
-+                resetProgress,
-+            }}
-+        >
-+            {children}
-+        </ProgressContext.Provider>
++        <div className="space-y-6 max-w-2xl mx-auto p-6 bg-white rounded-xl shadow-sm border border-gray-100">
++            <div className="text-center">
++                <UploadCloud className="w-12 h-12 text-primary mx-auto mb-4" />
++                <h2 className="text-xl font-semibold text-gray-900">Upload Content CSV</h2>
++                <p className="text-sm text-gray-500 mt-2">
++                    Select a .csv file containing standard weekly content columns.
++                    <br />
++                    <span className="text-xs text-blue-500">Processed by Go Backend</span>
++                </p>
++            </div>
++
++            <div className="flex justify-center">
++                <label className="relative cursor-pointer bg-primary hover:bg-primary/90 text-white font-medium py-3 px-6 rounded-lg transition-colors flex items-center gap-2 shadow-md hover:shadow-lg">
++                    {isProcessing ? (
++                        <>
++                            <Loader2 className="animate-spin w-5 h-5" />
++                            <span>Uploading & Processing...</span>
++                        </>
++                    ) : (
++                        <>
++                            <span>Select CSV File</span>
++                            <input
++                                type="file"
++                                accept=".csv"
++                                onChange={handleFileChange}
++                                disabled={isProcessing}
++                                className="hidden"
++                            />
++                        </>
++                    )}
++                </label>
++            </div>
++
++            {/* Success State */}
++            {successCount !== null && (
++                <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
++                    <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
++                    <div>
++                        <h3 className="font-medium text-green-900">Import Successful!</h3>
++                        <p className="text-sm text-green-700 mt-1">
++                            Backend processed and saved <strong>{successCount}</strong> content items.
++                        </p>
++                    </div>
++                </div>
++            )}
++
++            {/* Error State */}
++            {(errorMessage || (errors && errors.length > 0)) && (
++                <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg animate-in fade-in slide-in-from-top-2">
++                    <div className="flex items-center gap-2 mb-3">
++                        <AlertCircle className="w-5 h-5 text-red-600" />
++                        <h3 className="font-medium text-red-900">Validation Failed</h3>
++                    </div>
++
++                    {errorMessage && <p className="text-sm text-red-700 mb-2">{errorMessage}</p>}
++
++                    {errors && errors.length > 0 && (
++                        <ul className="space-y-2 text-sm text-red-700 list-disc list-inside bg-white/50 p-3 rounded border border-red-100 max-h-60 overflow-y-auto">
++                            {errors.map((err, idx) => (
++                                <li key={idx}>
++                                    <span className="font-semibold">Row {err.row}:</span> {err.message}
++                                </li>
++                            ))}
++                        </ul>
++                    )}
++                </div>
++            )}
++        </div>
 +    );
 +}
-+
-+// ─── Hook ──────────────────────────────────────────────
-+
-+export function useProgress(): ProgressContextType {
-+    const context = useContext(ProgressContext);
-+    if (context === undefined) {
-+        throw new Error("useProgress must be used within a ProgressProvider");
-+    }
-+    return context;
-+}
-diff --git a/components/ThemeProvider.tsx b/components/ThemeProvider.tsx
-index 626fd87..095799a 100644
---- a/components/ThemeProvider.tsx
-+++ b/components/ThemeProvider.tsx
-@@ -1,7 +1,8 @@
- "use client";
- 
--import { createContext, useContext, ReactNode } from "react";
-+import { createContext, useContext, useEffect, ReactNode } from "react";
- import { useTheme, ThemeMode } from "@/hooks/useTheme";
-+import { useProgress } from "@/components/ProgressProvider";
- 
- interface ThemeContextType {
-     theme: ThemeMode;
-@@ -16,6 +17,21 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
- 
- export function ThemeProvider({ children }: { children: ReactNode }) {
-     const themeState = useTheme();
-+    const { progress, setThemeMode } = useProgress();
-+
-+    // Sync: เมื่อ progress โหลดค่า theme จาก persistence → set ให้ useTheme
-+    useEffect(() => {
-+        if (progress.themeMode !== themeState.theme) {
-+            themeState.setTheme(progress.themeMode);
-+        }
-+    }, [progress.themeMode, themeState.theme, themeState.setTheme]);
-+
-+    // Sync: เมื่อ useTheme toggle → บันทึกกลับไป progress
-+    useEffect(() => {
-+        if (themeState.theme !== progress.themeMode) {
-+            setThemeMode(themeState.theme);
-+        }
-+    }, [themeState.theme, progress.themeMode, setThemeMode]);
- 
-     return (
-         <ThemeContext.Provider value={themeState}>
-diff --git a/components/__tests__/ProgressProvider.test.tsx b/components/__tests__/ProgressProvider.test.tsx
+diff --git a/lib/constants/categories.ts b/lib/constants/categories.ts
 new file mode 100644
-index 0000000..ed36af2
+index 0000000..3598799
 --- /dev/null
-+++ b/components/__tests__/ProgressProvider.test.tsx
-@@ -0,0 +1,200 @@
-+import { describe, it, expect, beforeEach, vi } from "vitest";
-+import { renderHook, act } from "@testing-library/react";
-+import { ReactNode } from "react";
-+import { ProgressProvider, useProgress } from "../ProgressProvider";
++++ b/lib/constants/categories.ts
+@@ -0,0 +1,15 @@
++export const CONTENT_CATEGORIES = [
++    'Mindfulness',
++    'Nutrition',
++    'Fitness',
++    'Sleep',
++    'Stress Management',
++    'Productivity',
++    'Relationships',
++    'Financial Wellness',
++    'Creativity',
++    'Environment',
++    'Community',
++] as const;
 +
-+// ===================================================================
-+// 🟥 RED Phase: Failing Tests สำหรับ ProgressProvider
-+// ทดสอบการ integrate PersistenceService กับ React Context
-+// ===================================================================
++export type ContentCategory = typeof CONTENT_CATEGORIES[number];
+diff --git a/lib/services/contentService.test.ts b/lib/services/contentService.test.ts
+new file mode 100644
+index 0000000..85567a0
+--- /dev/null
++++ b/lib/services/contentService.test.ts
+@@ -0,0 +1,58 @@
++import { describe, it, expect, vi, beforeEach } from 'vitest';
++import { uploadContentCsv, API_BASE_URL } from './contentService';
 +
-+// Mock localStorage
-+const store: Record<string, string> = {};
-+const localStorageMock = {
-+    getItem: vi.fn((key: string) => store[key] ?? null),
-+    setItem: vi.fn((key: string, value: string) => {
-+        store[key] = value;
-+    }),
-+    removeItem: vi.fn((key: string) => {
-+        delete store[key];
-+    }),
-+    clear: vi.fn(() => {
-+        Object.keys(store).forEach((key) => delete store[key]);
-+    }),
-+    get length() {
-+        return Object.keys(store).length;
-+    },
-+    key: vi.fn((index: number) => Object.keys(store)[index] ?? null),
-+};
++describe('contentService', () => {
++    describe('uploadContentCsv', () => {
++        let fetchMock: any;
 +
-+Object.defineProperty(globalThis, "localStorage", {
-+    value: localStorageMock,
++        beforeEach(() => {
++            fetchMock = vi.fn();
++            global.fetch = fetchMock;
++        });
++
++        it('should return success response when upload succeeds', async () => {
++            fetchMock.mockResolvedValueOnce({
++                ok: true,
++                json: async () => ({ status: 'success', message: 'OK', count: 5 }),
++            });
++
++            const file = new File(['csv content'], 'test.csv', { type: 'text/csv' });
++            const result = await uploadContentCsv(file);
++
++            expect(result).toEqual({ status: 'success', message: 'OK', count: 5 });
++            expect(fetchMock).toHaveBeenCalledWith(`${API_BASE_URL}/content/upload`, expect.objectContaining({
++                method: 'POST',
++                body: expect.any(FormData),
++            }));
++        });
++
++        it('should return error response when backend returns failure', async () => {
++            fetchMock.mockResolvedValueOnce({
++                ok: false,
++                json: async () => ({ status: 'error', message: 'Failed', errors: [{ row: 1, message: 'Bad' }] }),
++            });
++
++            const file = new File(['csv content'], 'test.csv', { type: 'text/csv' });
++            const result = await uploadContentCsv(file);
++
++            expect(result).toEqual({
++                status: 'error',
++                message: 'Failed',
++                errors: [{ row: 1, message: 'Bad' }],
++            });
++        });
++
++        it('should handle network errors gracefully', async () => {
++            fetchMock.mockRejectedValueOnce(new Error('Network Error'));
++
++            const file = new File(['csv content'], 'test.csv', { type: 'text/csv' });
++            const result = await uploadContentCsv(file);
++
++            expect(result).toEqual({
++                status: 'error',
++                message: expect.stringContaining('Network error'),
++                errors: [{ row: 0, message: expect.stringContaining('Could not connect') }],
++            });
++        });
++    });
 +});
+diff --git a/lib/services/contentService.ts b/lib/services/contentService.ts
+new file mode 100644
+index 0000000..1a68f53
+--- /dev/null
++++ b/lib/services/contentService.ts
+@@ -0,0 +1,122 @@
++import { WeeklyContent, CsvValidationError } from '../types/content';
 +
-+function wrapper({ children }: { children: ReactNode }) {
-+    return <ProgressProvider>{children}</ProgressProvider>;
++export const CONTENT_STORAGE_KEY = 'mdw_weekly_content';
++// Use env var or default to localhost:8080
++export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
++
++export interface ContentStorageSchema {
++    version: number;
++    items: Record<string, WeeklyContent>; // Keyed by ID for O(1) upsert
 +}
 +
-+describe("ProgressProvider + useProgress", () => {
-+    beforeEach(() => {
-+        localStorageMock.clear();
-+        vi.clearAllMocks();
-+    });
++export interface UploadResponse {
++    status: string;
++    message: string;
++    count?: number;
++    errors?: CsvValidationError[];
++}
 +
-+    // ─── Initialization ──────────────────────────────────
++const CURRENT_VERSION = 1;
 +
-+    it("ควรให้ค่า default เมื่อไม่มี saved data", () => {
-+        const { result } = renderHook(() => useProgress(), { wrapper });
++/**
++ * Uploads a CSV file to the backend for processing and storage.
++ */
++export async function uploadContentCsv(file: File): Promise<UploadResponse> {
++    const formData = new FormData();
++    formData.append('file', file);
 +
-+        expect(result.current.progress.version).toBe(1);
-+        expect(result.current.progress.themeMode).toBe("light");
-+        expect(result.current.progress.language).toBe("th");
-+        expect(result.current.progress.completedLessons).toEqual([]);
-+        expect(result.current.progress.bookmarks).toEqual([]);
-+    });
++    try {
++        const response = await fetch(`${API_BASE_URL}/content/upload`, {
++            method: 'POST',
++            body: formData,
++        });
 +
-+    it("ควรโหลด saved data จาก localStorage ตอน mount", () => {
-+        const saved = {
-+            version: 1,
-+            themeMode: "dark" as const,
-+            language: "en" as const,
-+            completedLessons: ["lesson-1"],
-+            bookmarks: [],
-+            lastVisited: "2026-02-10T18:00:00Z",
++        const result = await response.json();
++
++        if (!response.ok) {
++            // Handle validation errors from backend
++            return {
++                status: 'error',
++                message: result.message || 'Upload failed',
++                errors: result.errors || [{ row: 0, message: result.message || 'Unknown error' }]
++            };
++        }
++
++        return result;
++    } catch (error) {
++        console.error('Network request failed:', error);
++        return {
++            status: 'error',
++            message: 'Network error. Please check if the backend server is running.',
++            errors: [{ row: 0, message: 'Could not connect to backend server.' }]
 +        };
-+        localStorageMock.setItem("theMiddleWay.progress", JSON.stringify(saved));
++    }
++}
 +
-+        const { result } = renderHook(() => useProgress(), { wrapper });
++/**
++ * Loads all content from LocalStorage (Deprecated for production, kept for fallback/dev).
++ * Returns an empty object structure if nothing exists or error occurs.
++ */
++export function getAllContent(): WeeklyContent[] {
++    try {
++        const raw = localStorage.getItem(CONTENT_STORAGE_KEY);
++        if (!raw) return [];
 +
-+        expect(result.current.progress.themeMode).toBe("dark");
-+        expect(result.current.progress.language).toBe("en");
-+        expect(result.current.progress.completedLessons).toEqual(["lesson-1"]);
++        const parsed = JSON.parse(raw);
++        if (!parsed || typeof parsed !== 'object' || !parsed.items) {
++            return [];
++        }
++
++        return Object.values(parsed.items);
++    } catch (error) {
++        console.warn('[ContentService] Failed to load content:', error);
++        return [];
++    }
++}
++
++/**
++ * Upserts a list of WeeklyContent items into LocalStorage.
++ * Preserves existing items that are not in the new list.
++ * Updates items that have matching IDs.
++ */
++export function saveContent(newItems: WeeklyContent[]): boolean {
++    try {
++        // 1. Load existing
++        const raw = localStorage.getItem(CONTENT_STORAGE_KEY);
++        let storage: ContentStorageSchema = {
++            version: CURRENT_VERSION,
++            items: {}
++        };
++
++        if (raw) {
++            try {
++                const parsed = JSON.parse(raw);
++                if (parsed && parsed.items) {
++                    storage = parsed;
++                }
++            } catch {
++                // Ignore corrupt data, start fresh
++                console.warn('[ContentService] Corrupt data found, starting fresh integration.');
++            }
++        }
++
++        // 2. Upsert logic
++        newItems.forEach(item => {
++            storage.items[item.id] = item;
++        });
++
++        // 3. Save back
++        localStorage.setItem(CONTENT_STORAGE_KEY, JSON.stringify(storage));
++        return true;
++    } catch (error) {
++        console.error('[ContentService] Failed to save content:', error);
++        return false;
++    }
++}
++
++/**
++ * Clears all content (Development utility)
++ */
++export function clearAllContent(): void {
++    localStorage.removeItem(CONTENT_STORAGE_KEY);
++}
+diff --git a/lib/services/csvProcessor.test.ts b/lib/services/csvProcessor.test.ts
+new file mode 100644
+index 0000000..ad84e0b
+--- /dev/null
++++ b/lib/services/csvProcessor.test.ts
+@@ -0,0 +1,50 @@
++import { describe, it, expect } from 'vitest';
++import { parseAndValidateCsv } from './csvProcessor';
++
++// Mock implementation of parseAndValidateCsv for now OR test fails without it
++// But since we are creating the test file first, we import from a file that doesn't exist yet?
++// Wait, create the dummy file first so import doesn't fail TS compile?
++// Or create the test assuming the file exists (Red phase).
++
++const validCsv = `Week,Category,Title,Content
++1,Fitness,"Stretch Morning","Doing simple stretches"
++2,Nutrition,"Drink Water","Hydration is key"`;
++
++const invalidWeekCsv = `Week,Category,Title,Content
++9,Fitness,"Stretch Morning","Doing simple stretches"`;
++
++const invalidCategoryCsv = `Week,Category,Title,Content
++1,Gym,"Stretch Morning","Doing simple stretches"`;
++
++describe('CSV Processor', () => {
++    it('should parse valid CSV correctly', async () => {
++        // We need to Mock File object or pass string content directly?
++        // Let's design the function to accept string content to make testing easier, 
++        // and have a wrapper for File object.
++
++        const result = await parseAndValidateCsv(validCsv);
++
++        expect(result.success).toBe(true);
++        expect(result.data).toHaveLength(2);
++        expect(result.data?.[0]).toMatchObject({
++            week: 1,
++            category: 'Fitness',
++            title: 'Stretch Morning',
++            content: 'Doing simple stretches'
++        });
 +    });
 +
-+    // ─── Lesson Completion ───────────────────────────────
-+
-+    it("ควร mark lesson ว่า completed ได้", () => {
-+        const { result } = renderHook(() => useProgress(), { wrapper });
-+
-+        act(() => {
-+            result.current.completeLesson("lesson-2-eightfold-path");
-+        });
-+
-+        expect(result.current.progress.completedLessons).toContain(
-+            "lesson-2-eightfold-path"
-+        );
++    it('should return error for invalid week number', async () => {
++        const result = await parseAndValidateCsv(invalidWeekCsv);
++        expect(result.success).toBe(false);
++        expect(result.errors).toHaveLength(1);
++        expect(result.errors?.[0].message).toContain('Week must be between 1 and 8');
 +    });
 +
-+    it("ไม่ควร duplicate lesson ที่ completed แล้ว", () => {
-+        const { result } = renderHook(() => useProgress(), { wrapper });
-+
-+        act(() => {
-+            result.current.completeLesson("lesson-1");
-+            result.current.completeLesson("lesson-1");
-+        });
-+
-+        expect(
-+            result.current.progress.completedLessons.filter((l) => l === "lesson-1")
-+                .length
-+        ).toBe(1);
-+    });
-+
-+    // ─── Bookmarks ───────────────────────────────────────
-+
-+    it("ควร toggle bookmark ได้ (เพิ่ม)", () => {
-+        const { result } = renderHook(() => useProgress(), { wrapper });
-+
-+        act(() => {
-+            result.current.toggleBookmark("lesson-3");
-+        });
-+
-+        expect(result.current.progress.bookmarks).toContain("lesson-3");
-+    });
-+
-+    it("ควร toggle bookmark ได้ (ลบ)", () => {
-+        const { result } = renderHook(() => useProgress(), { wrapper });
-+
-+        act(() => {
-+            result.current.toggleBookmark("lesson-3");
-+        });
-+        act(() => {
-+            result.current.toggleBookmark("lesson-3");
-+        });
-+
-+        expect(result.current.progress.bookmarks).not.toContain("lesson-3");
-+    });
-+
-+    // ─── Theme ───────────────────────────────────────────
-+
-+    it("ควร update themeMode ได้", () => {
-+        const { result } = renderHook(() => useProgress(), { wrapper });
-+
-+        act(() => {
-+            result.current.setThemeMode("dark");
-+        });
-+
-+        expect(result.current.progress.themeMode).toBe("dark");
-+    });
-+
-+    // ─── Language ────────────────────────────────────────
-+
-+    it("ควร update language ได้", () => {
-+        const { result } = renderHook(() => useProgress(), { wrapper });
-+
-+        act(() => {
-+            result.current.setLanguage("en");
-+        });
-+
-+        expect(result.current.progress.language).toBe("en");
-+    });
-+
-+    // ─── Reset ───────────────────────────────────────────
-+
-+    it("ควร reset progress กลับเป็น default ได้", () => {
-+        const { result } = renderHook(() => useProgress(), { wrapper });
-+
-+        act(() => {
-+            result.current.completeLesson("lesson-1");
-+            result.current.setThemeMode("dark");
-+        });
-+        act(() => {
-+            result.current.resetProgress();
-+        });
-+
-+        expect(result.current.progress.themeMode).toBe("light");
-+        expect(result.current.progress.completedLessons).toEqual([]);
-+    });
-+
-+    // ─── Auto-save ───────────────────────────────────────
-+
-+    it("ควร auto-save ลง localStorage เมื่อ progress เปลี่ยน", () => {
-+        vi.useFakeTimers();
-+        const { result } = renderHook(() => useProgress(), { wrapper });
-+
-+        // flush setTimeout(0) ภายใน ProgressProvider ที่ปิด isInitialMount flag
-+        act(() => {
-+            vi.advanceTimersByTime(1);
-+        });
-+
-+        vi.clearAllMocks(); // เคลียร์ calls จาก initial load
-+
-+        act(() => {
-+            result.current.completeLesson("lesson-1");
-+        });
-+
-+        expect(localStorage.setItem).toHaveBeenCalledWith(
-+            "theMiddleWay.progress",
-+            expect.stringContaining("lesson-1")
-+        );
-+
-+        vi.useRealTimers();
-+    });
-+
-+    // ─── Error: useProgress outside Provider ─────────────
-+
-+    it("ควร throw error ถ้าเรียก useProgress นอก Provider", () => {
-+        expect(() => {
-+            renderHook(() => useProgress());
-+        }).toThrow("useProgress must be used within a ProgressProvider");
++    it('should return error for invalid category', async () => {
++        const result = await parseAndValidateCsv(invalidCategoryCsv);
++        expect(result.success).toBe(false);
++        expect(result.errors).toHaveLength(1);
++        expect(result.errors?.[0].message).toContain('Invalid category');
 +    });
 +});
-diff --git a/hooks/useTheme.ts b/hooks/useTheme.ts
-index 892c7ea..a247165 100644
---- a/hooks/useTheme.ts
-+++ b/hooks/useTheme.ts
-@@ -11,12 +11,8 @@ export function useTheme() {
-     const [theme, setThemeState] = useState<ThemeMode>(DEFAULT_THEME);
-     const [mounted, setMounted] = useState(false);
- 
--    // Read from localStorage on mount
-+    // Set mounted state
-     useEffect(() => {
--        const stored = localStorage.getItem(STORAGE_KEY) as ThemeMode | null;
--        if (stored === "light" || stored === "dark") {
--            setThemeState(stored);
--        }
-         setMounted(true);
-     }, []);
- 
-@@ -24,7 +20,6 @@ export function useTheme() {
-     useEffect(() => {
-         if (!mounted) return;
-         document.documentElement.setAttribute("data-theme", theme);
--        localStorage.setItem(STORAGE_KEY, theme);
-     }, [theme, mounted]);
- 
-     const toggleTheme = useCallback(() => {
-diff --git a/lib/services/__tests__/persistenceService.test.ts b/lib/services/__tests__/persistenceService.test.ts
+diff --git a/lib/services/csvProcessor.ts b/lib/services/csvProcessor.ts
 new file mode 100644
-index 0000000..1001627
+index 0000000..bbabc7a
 --- /dev/null
-+++ b/lib/services/__tests__/persistenceService.test.ts
-@@ -0,0 +1,144 @@
-+import { describe, it, expect, beforeEach, vi } from "vitest";
-+import {
-+    saveProgress,
-+    loadProgress,
-+    clearProgress,
-+} from "../persistenceService";
-+import { UserProgress, DEFAULT_PROGRESS, STORAGE_KEY } from "../../types/progress";
++++ b/lib/services/csvProcessor.ts
+@@ -0,0 +1,116 @@
++import { WeeklyContent, CsvProcessResult, CsvValidationError } from '../types/content';
++import { CONTENT_CATEGORIES, ContentCategory } from '../constants/categories';
 +
-+// ===================================================================
-+// 🟥 RED Phase: Failing Tests
-+// ทดสอบ PersistenceService ทั้ง 3 methods: save, load, clear
-+// ===================================================================
++/**
++ * Validates and processes a CSV string into WeeklyContent objects.
++ * 
++ * @param csvContent The raw CSV content as a string.
++ * @returns A promise resolving to a CsvProcessResult object.
++ */
++export async function parseAndValidateCsv(csvContent: string): Promise<CsvProcessResult> {
++    const errors: CsvValidationError[] = [];
++    const validData: WeeklyContent[] = [];
 +
-+// Mock localStorage
-
++    const lines = csvContent.split(/\r?\n/).filter(line => line.trim() !== '');
++
++    if (lines.length === 0) {
++        errors.push({ row: 0, message: 'File is empty' });
++        return { success: false, errors };
++    }
++
++    // Header Validation (FR2)
++    const headerLine = lines[0];
++    const headers = headerLine.split(',').map(h => h.trim().toLowerCase());
++    const requiredHeaders = ['week', 'category', 'title', 'content'];
++
++    const missingHeaders = requiredHeaders.filter(req => !headers.includes(req));
++    if (missingHeaders.length > 0) {
++        errors.push({ row: 1, message: `Missing required headers: ${missingHeaders.join(', ')}` });
++        return { success: false, errors };
++    }
++
++    // Row Index Mapping
++    con
 ... (Diff truncated for size) ...
 
 PR TEMPLATE:

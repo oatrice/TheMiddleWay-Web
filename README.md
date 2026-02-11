@@ -36,6 +36,7 @@ app/
 ├── library/page.tsx    # Library page
 ├── courses/page.tsx    # Courses page
 ├── profile/page.tsx    # Profile page
+├── admin/content/page.tsx # Content management (CSV upload)
 └── globals.css         # Global styles & design tokens
 components/
 └── MobileNavigation.tsx  # Bottom navigation bar

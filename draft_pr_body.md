@@ -1,48 +1,47 @@
-Closes https://github.com/owner/repo/issues/6, https://github.com/oatrice/TheMiddleWay-Metadata/issues/15
+Closes: [Link to Issue #5]
 
 ### Summary
 
-This pull request introduces a crucial infrastructure component: a persistence layer using the browser's `localStorage`. This system is designed to track and save user progress, including completed lessons, bookmarks, and application settings (like theme and language). By persisting this data, we ensure a seamless user experience across sessions, as users will not lose their progress upon refreshing the page or returning to the app later.
+This pull request introduces a comprehensive system for ingesting weekly content via CSV file uploads. It resolves the need for a scalable method to manage the 8-week content plan across 11 distinct categories.
 
-The implementation is centered around a new `ProgressProvider` that acts as a global state manager, syncing automatically with `localStorage`.
+The implementation includes a new **Admin Content Management UI**, seamless integration with a **Go backend API** for robust processing, and significant **CI/CD enhancements** for automated versioning and deployments. The core CSV parsing and validation logic was intentionally migrated from the frontend to the backend to improve performance, security, and maintain a clear separation of concerns.
 
-### Key Changes
+### Key Changes & Implementation Details
 
-*   **`persistenceService.ts`:** A new, dedicated service has been created to abstract all direct interactions with `localStorage`. It provides three core functions: `saveProgress`, `loadProgress`, and `clearProgress`. This centralizes persistence logic and makes it easily testable.
+1.  **Admin Content Management UI (`/admin/content`)**
+    *   A new page has been created to serve as the central hub for content management.
+    *   A user-friendly `CsvUploadForm` component provides a clear interface for file selection and displays real-time feedback.
+    *   The UI includes explicit instructions on the required CSV format:
+        *   **Headers:** `Week, Category, Title, Content`
+        *   **Week:** A number from 1 to 8.
+        *   **Category:** Must be an exact, case-sensitive match to one of the 11 predefined categories.
 
-*   **`ProgressProvider` and `useProgress` Hook:**
-    *   Implemented a global state provider using `React.Context` and the `useReducer` hook for robust state management.
-    *   This provider wraps the entire application (`app/layout.tsx`) to make progress data available everywhere.
-    *   It automatically loads saved data from `localStorage` on initial mount and auto-saves any subsequent changes to the progress state.
+2.  **Backend Integration & Logic Migration**
+    *   The primary responsibility for parsing, validating, and storing CSV data has been delegated to a dedicated Go backend service.
+    *   A new frontend service, `contentService.ts`, handles the file upload by sending a `POST` request to the `/api/v1/content/upload` endpoint.
+    *   This service is responsible for interpreting the API's JSON response, displaying either a success message with the count of ingested items or a detailed list of validation errors.
 
-*   **Theme Persistence Refactor:**
-    *   The `ThemeProvider` and `useTheme` hook have been refactored.
-    *   Instead of managing their own `localStorage` state, they now sync bi-directionally with the `ProgressProvider`. This consolidates all persisted state into a single, unified `UserProgress` object.
+3.  **Data Validation & Constants**
+    *   The backend now enforces strict validation rules for each row in the CSV, ensuring data integrity.
+    *   A new constant file, `lib/constants/categories.ts`, was added to the frontend to define the 11 valid content categories, ensuring consistency.
 
-*   **Developer Debug Tool (`DebugProgressControl.tsx`):**
-    *   A new debug component has been added to the `/profile` page to facilitate easy testing and verification.
-    *   It displays the live `progress` state object as JSON.
-    *   It includes buttons to trigger state changes (e.g., complete a lesson, toggle language, reset data) to confirm persistence works correctly after a page refresh.
+4.  **CI/CD Enhancements**
+    *   **Auto-Tag Workflow (`auto-tag.yml`):** Automatically creates and pushes a new Git tag whenever the `version` field in `package.json` is updated, streamlining the release process.
+    *   **Vercel Version Alias (`vercel-version-alias.yml`):** Creates a unique, immutable Vercel deployment URL based on the Git tag (e.g., `my-app-v1-2-3.vercel.app`). This provides stable links for testing and reviewing specific versions.
 
-*   **Comprehensive Unit Testing:**
-    *   Added extensive unit tests using Vitest to ensure the reliability of the new system.
-    *   Tests cover the `persistenceService` functions (`lib/services/__tests__/persistenceService.test.ts`).
-    *   Tests also cover the `ProgressProvider` and `useProgress` hook, including state updates, initialization, and auto-saving logic (`components/__tests__/ProgressProvider.test.tsx`).
-
-*   **CI Workflow Enhancement:**
-    *   The CI pipeline (`.github/workflows/web-ci.yml`) has been updated to include a `test` step, ensuring that all tests are automatically executed on every push to maintain code quality.
+5.  **Testing & Code Quality**
+    *   Unit tests have been added for the new `contentService` to verify its interaction with the backend API, including success and error handling.
+    *   The implementation incorporates feedback from a code review, leading to improved logic and script reliability.
 
 ### How to Test
 
-1.  Navigate to the `/profile` page.
-2.  You should see a new **"🛠️ Debug: Persistence Control"** section.
-3.  Click the buttons to modify the state, for example:
-    *   "✅ Complete Lesson (Random)"
-    *   "🌐 Toggle Lang"
-4.  Observe the JSON data updating in the debug view.
-5.  **Refresh the page.**
-6.  **Verification:** The state you set in the previous steps should still be present in the debug view, confirming that the data was successfully reloaded from `localStorage`.
-7.  (Optional) Open your browser's DevTools (Application -> Local Storage) and inspect the `theMiddleWay.progress` key to see the raw stored data.
-8.  Click the "⚠️ Reset All Data" button and refresh the page. The state should revert to its default values.
-
-#### Screenshot of the Debug Tool  <!-- Replace with actual screenshot -->
+1.  Navigate to the new admin page at `/admin/content`.
+2.  **Test the Happy Path:**
+    *   Create a CSV file with valid data (e.g., `Week` between 1-8, `Category` from the approved list).
+    *   Click "Select CSV File" and upload it.
+    *   **Expected:** A success message appears, indicating the number of content items processed by the backend.
+3.  **Test Validation Errors:**
+    *   Create a CSV file with invalid data (e.g., a row with `Week: 9`, another with `Category: Health`, a missing `Title` header).
+    *   Upload the invalid file.
+    *   **Expected:** A validation error message appears, listing each error with its corresponding row number and a descriptive message (e.g., "Row 2: Week must be between 1 and 8").
+4.  Verify the network request in your browser's developer tools to see the `POST` request to the backend and the JSON response.
