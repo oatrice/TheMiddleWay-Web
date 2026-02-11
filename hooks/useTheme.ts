@@ -18,6 +18,7 @@ export function useTheme() {
             setThemeState(stored);
         }
         setMounted(true);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // Apply theme to document
