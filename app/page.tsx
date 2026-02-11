@@ -59,7 +59,7 @@ export default function WisdomGardenScreen() {
       />
 
       <PracticeChecklist
-        data={weeklyData.categories} // Pass categories directly
+        categories={weeklyData.categories}
         onCheckItem={handleCheckItem}
       />
     </motion.div>

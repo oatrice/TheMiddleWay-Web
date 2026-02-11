@@ -1,16 +1,16 @@
 import React from 'react';
-import { WeeklyData } from '@/lib/types/wisdom-garden';
+import { PracticeCategory } from '@/lib/types/wisdom-garden';
 import { PracticeCard } from './PracticeCard';
 
 interface PracticeChecklistProps {
-    data: WeeklyData;
+    categories: PracticeCategory[];
     onCheckItem: (id: string) => void;
 }
 
-export const PracticeChecklist: React.FC<PracticeChecklistProps> = ({ data, onCheckItem }) => {
+export const PracticeChecklist: React.FC<PracticeChecklistProps> = ({ categories, onCheckItem }) => {
     return (
         <div className="space-y-6 pb-20">
-            {data.categories.map((category) => (
+            {categories.map((category) => (
                 <div key={category.id}>
                     <h3 className="text-lg font-semibold text-text-primary mb-3 pl-1 border-l-4 border-primary/50">
                         {category.title}
