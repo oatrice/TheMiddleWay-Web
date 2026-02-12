@@ -7,10 +7,13 @@ import { AppHeader } from "@/components/features/wisdom-garden/AppHeader";
 import { WisdomGardenVisualization } from "@/components/features/wisdom-garden/WisdomGardenVisualization";
 import { PracticeChecklist } from "@/components/features/wisdom-garden/PracticeChecklist";
 import { useWisdomGarden } from "@/hooks/useWisdomGarden";
+import { useOnboarding } from "@/hooks/useOnboarding";
+import { OnboardingScreen } from "@/components/onboarding/OnboardingScreen";
 import Link from "next/link";
 import { ArrowRight, Info } from "lucide-react";
 
 export default function WisdomGardenScreen() {
+  const { hasCompletedOnboarding, isLoading: isOnboardingLoading, completeOnboarding } = useOnboarding();
   const { selectedWeek, setSelectedWeek, weeklyData, isLoading } = useWisdomGarden();
   const [showToast, setShowToast] = useState(false);
 
@@ -18,6 +21,18 @@ export default function WisdomGardenScreen() {
     setShowToast(true);
     setTimeout(() => setShowToast(false), 3000);
   };
+
+  if (isOnboardingLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background text-text-secondary">
+        {/* Minimal loading state to prevent flash */}
+      </div>
+    );
+  }
+
+  if (!hasCompletedOnboarding) {
+    return <OnboardingScreen onComplete={completeOnboarding} />;
+  }
 
   if (isLoading || !weeklyData) {
     return (
