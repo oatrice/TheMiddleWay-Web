@@ -1,50 +1,48 @@
-Closes https://github.com/owner/repo/issues/2
+Closes: https://github.com/owner/repo/issues/11
 
 ### Summary
 
-This pull request introduces the new **"ห้องปฏิบัติธรรม" (Weekly Practices & Checklist)** page, a dedicated space for users to actively engage with their weekly tasks. This separates the interactive "doing" part from the "viewing" part, which remains on the Dashboard.
+This pull request introduces a multi-step onboarding experience for first-time users. The goal is to provide a warm welcome, introduce the app's core philosophy of "Authentic Wisdom," and set expectations for the user's journey. This flow is designed to be engaging and informative, ensuring new users understand the value proposition from their very first visit.
 
-The Dashboard (now named "สวนแห่งปัญญา" or Wisdom Garden) has been updated to be a read-only summary of the user's progress. It now features a prominent call-to-action button that directs users to the new Practice Room. To enhance user experience, attempting to interact with the checklist on the Dashboard will trigger a toast notification, guiding them to the correct page for making changes.
-
-A significant part of this work involved a major refactor of the state management. All logic related to fetching, updating, and persisting checklist data is now encapsulated within a new reusable `useWisdomGarden` hook, leading to cleaner components and more maintainable code.
+The onboarding state is managed via `localStorage`, so returning users will bypass this flow and go directly to the main application.
 
 ### Key Changes
 
-*   **✨ New Page: `/weekly-practices`**
-    *   Creates a new, focused page for users to view and check off their weekly practice items.
-    *   This page is fully interactive, allowing users to toggle the completion status of each task.
+-   **✨ Multi-Step Onboarding Flow:**
+    -   A new `OnboardingScreen.tsx` component has been created, which presents a four-step animated carousel to the user.
+    -   The flow covers:
+        1.  A general welcome.
+        2.  An introduction to "Authentic Wisdom."
+        3.  The concept of "Discover Your Path."
+        4.  The importance of a "Daily Practice."
+    -   Animations are handled by `framer-motion` for a smooth and polished user experience.
+    -   New image assets have been added for each onboarding step.
 
-*   **🏡 Dashboard Update (`/`)**
-    *   The checklist on the main page is now **read-only** to serve as a high-level summary.
-    *   A "Go to Practice Room" button has been added for clear navigation.
-    *   A toast notification now appears if a user tries to click the read-only checklist, preventing confusion.
+-   **⚙️ `useOnboarding` Custom Hook:**
+    -   A new hook, `useOnboarding.ts`, has been implemented to manage the onboarding state.
+    -   It checks `localStorage` for a completion flag (`onboarding_completed`) to determine if the user has seen the flow before.
+    -   It includes an `isLoading` state to prevent a flash of the main content before the check is complete.
+    -   Provides `completeOnboarding` and `resetOnboarding` functions for managing the state.
 
-*   **⚛️ Refactor: `useWisdomGarden` Custom Hook**
-    *   Centralized all state management logic into a single hook (`useWisdomGarden`).
-    *   This hook handles:
-        *   Selecting the current week.
-        *   Loading weekly data from `localStorage` with a fallback to mock data.
-        *   Persisting changes back to `localStorage`.
-        *   Toggling the completion state of practice items.
-        *   Syncing state between browser tabs using the `storage` event.
+-   **🏠 Integration with Main Page:**
+    -   The main `app/page.tsx` now utilizes the `useOnboarding` hook to conditionally render the `OnboardingScreen` for new users. Once completed, the main `WisdomGardenScreen` is displayed.
 
-*   **📐 Logic Extraction & Testing**
-    *   The core business logic for toggling an item and recalculating the score has been extracted into a pure function `togglePracticeItem`.
-    *   Added unit tests for this function (`wisdom-garden.test.ts`) to ensure its correctness and prevent regressions.
+-   **🧪 Comprehensive Testing:**
+    -   Added unit tests for the `OnboardingScreen` component in `OnboardingScreen.test.tsx`.
+    -   Tests cover initial rendering, navigation between slides, the "Skip" functionality, and the final completion step.
 
-*   **♻️ Component Enhancements**
-    *   `PracticeChecklist` and `PracticeCard` components were updated to accept a `readOnly` prop, making them reusable for both the read-only dashboard and the interactive practices page.
-
-*   **CI/CD**
-    *   Added a new GitHub Actions workflow to automatically deploy preview environments on Vercel for every pull request.
+-   **🐛 Bug Fix: Toast Notification Timer:**
+    -   As a minor improvement, the logic for the toast notification timer on the main page was moved into a `useEffect` hook. This ensures the timer is properly cleaned up when the component unmounts, preventing potential memory leaks.
 
 ### How to Test
 
-1.  Navigate to the **Dashboard** (`/`).
-2.  Observe that the checklist is displayed, but you cannot check or uncheck items.
-3.  Click on any checklist item. A toast message should appear at the bottom, saying "Please go to 'Practice Room' to check-in."
-4.  Click the **"Go to Practice Room"** button.
-5.  You should be on the `/weekly-practices` page. Here, you can check and uncheck items freely.
-6.  Go back to the Dashboard. The summary view should now reflect the changes you just made.
-7.  Refresh the page. Your progress should be persisted.
-8.  Use the week selector at the top to switch between weeks and confirm the correct data is loaded on both pages.
+1.  Pull down the branch and run the application (`npm run dev`).
+2.  Open your browser's developer tools.
+3.  Navigate to the **Application** tab -> **Local Storage** and clear any existing data for `localhost:3000`.
+4.  Refresh the page. You should see the new multi-step onboarding flow.
+5.  Click **"Get Started"** and **"Next"** to navigate through all the slides.
+6.  On the final slide, click **"Begin Your Journey"**. You should be redirected to the main application.
+7.  Refresh the page again. The onboarding screen should **not** appear, and you should see the main application directly.
+8.  To re-test the "skip" functionality, clear local storage again and click the **"Skip"** button on one of the initial slides. You should be taken directly to the main application.
+
+### Screenshot
