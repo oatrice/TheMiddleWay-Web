@@ -5,11 +5,21 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { ArrowRight, Check } from "lucide-react";
 
-interface OnboardingScreenProps {
-    onComplete: () => void;
+interface Slide {
+    id: string;
+    title: string;
+    body: string;
+    image: string;
+    isWelcome?: boolean;
+    isFinal?: boolean;
 }
 
-const SLIDES = [
+interface OnboardingScreenProps {
+    onComplete: () => void;
+    slides?: Slide[];
+}
+
+const DEFAULT_SLIDES: Slide[] = [
     {
         id: "welcome",
         title: "Welcome to The Middle Way",
@@ -38,22 +48,32 @@ const SLIDES = [
     },
 ];
 
-export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
+export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete, slides = DEFAULT_SLIDES }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
+    const [isCompleting, setIsCompleting] = useState(false);
 
     const handleNext = () => {
-        if (currentIndex < SLIDES.length - 1) {
+        if (isCompleting) return;
+
+        if (currentIndex < slides.length - 1) {
             setCurrentIndex(currentIndex + 1);
         } else {
+            setIsCompleting(true);
             onComplete();
         }
     };
 
     const handleSkip = () => {
+        if (isCompleting) return;
+        setIsCompleting(true);
         onComplete();
     };
 
-    const currentSlide = SLIDES[currentIndex];
+    const currentSlide = slides[currentIndex];
+
+    if (!currentSlide) {
+        return null;
+    }
 
     return (
         <div className="fixed inset-0 bg-background z-50 flex flex-col items-center justify-center p-6 text-center">
@@ -89,7 +109,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }
 
                     {/* Dots Indicator */}
                     <div className="flex space-x-2 mb-8">
-                        {SLIDES.map((_, index) => (
+                        {slides.map((_, index) => (
                             <div
                                 key={index}
                                 className={`w-2.5 h-2.5 rounded-full transition-colors duration-300 ${index === currentIndex ? "bg-primary" : "bg-gray-300 dark:bg-gray-700"

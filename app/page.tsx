@@ -17,9 +17,20 @@ export default function WisdomGardenScreen() {
   const { selectedWeek, setSelectedWeek, weeklyData, isLoading } = useWisdomGarden();
   const [showToast, setShowToast] = useState(false);
 
+  // Manage the toast timer with useEffect for proper cleanup
+  React.useEffect(() => {
+    if (showToast) {
+      const timer = setTimeout(() => {
+        setShowToast(false);
+      }, 3000);
+
+      // Cleanup function to clear the timeout on unmount
+      return () => clearTimeout(timer);
+    }
+  }, [showToast]);
+
   const handleReadOnlyClick = () => {
     setShowToast(true);
-    setTimeout(() => setShowToast(false), 3000);
   };
 
   if (isOnboardingLoading) {
