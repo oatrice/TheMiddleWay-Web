@@ -13,13 +13,31 @@ export default function WisdomGardenScreen() {
   const [weeklyData, setWeeklyData] = useState<WeeklyData | null>(null);
 
   useEffect(() => {
-    // Simulate fetching data
+    // Try to load from localStorage first
+    const storageKey = `wisdom_garden_week_${selectedWeek}`;
+    const savedData = localStorage.getItem(storageKey);
+
+    if (savedData) {
+      try {
+        setWeeklyData(JSON.parse(savedData));
+        return;
+      } catch (e) {
+        console.error("Failed to parse saved wisdom garden data", e);
+      }
+    }
+
+    // Fallback to Mock Data
     const data = WEEKLY_MOCK_DATA.find(d => d.weekNumber === selectedWeek);
     if (data) {
-      // Deep copy to avoid mutating the original mock data directly in a way that React might not detect
+      // Deep copy to avoid mutating the original mock data
       setWeeklyData(JSON.parse(JSON.stringify(data)));
     }
   }, [selectedWeek]);
+
+  // Helper to save data
+  const persistData = (week: number, data: WeeklyData) => {
+    localStorage.setItem(`wisdom_garden_week_${week}`, JSON.stringify(data));
+  };
 
   const handleCheckItem = (itemId: string) => {
     if (!weeklyData) return;
@@ -46,6 +64,7 @@ export default function WisdomGardenScreen() {
       currentScore: weeklyData.currentScore + scoreChange,
     };
 
+    persistData(selectedWeek, newData);
     setWeeklyData(newData);
   };
 
