@@ -5,9 +5,10 @@ import { PracticeCard } from './PracticeCard';
 interface PracticeChecklistProps {
     categories: PracticeCategory[];
     onCheckItem: (id: string) => void;
+    readOnly?: boolean;
 }
 
-export const PracticeChecklist: React.FC<PracticeChecklistProps> = ({ categories, onCheckItem }) => {
+export const PracticeChecklist: React.FC<PracticeChecklistProps> = ({ categories, onCheckItem, readOnly = false }) => {
     return (
         <div className="space-y-6 pb-20">
             {categories.map((category) => (
@@ -21,6 +22,7 @@ export const PracticeChecklist: React.FC<PracticeChecklistProps> = ({ categories
                                 key={item.id}
                                 item={item}
                                 onCheck={onCheckItem}
+                                readOnly={readOnly}
                             />
                         ))}
                     </div>

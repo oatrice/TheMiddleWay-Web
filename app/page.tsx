@@ -1,81 +1,31 @@
+
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { motion } from "framer-motion";
 import { AppHeader } from "@/components/features/wisdom-garden/AppHeader";
 import { WisdomGardenVisualization } from "@/components/features/wisdom-garden/WisdomGardenVisualization";
 import { PracticeChecklist } from "@/components/features/wisdom-garden/PracticeChecklist";
-import { WEEKLY_MOCK_DATA } from "@/lib/data/wisdom-garden-data";
-import { WeeklyData } from "@/lib/types/wisdom-garden";
+import { useWisdomGarden } from "@/hooks/useWisdomGarden";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 
 export default function WisdomGardenScreen() {
-  const [selectedWeek, setSelectedWeek] = useState(1);
-  const [weeklyData, setWeeklyData] = useState<WeeklyData | null>(null);
+  const { selectedWeek, setSelectedWeek, weeklyData, isLoading } = useWisdomGarden();
 
-  useEffect(() => {
-    // Try to load from localStorage first
-    const storageKey = `wisdom_garden_week_${selectedWeek}`;
-    const savedData = localStorage.getItem(storageKey);
-
-    if (savedData) {
-      try {
-        // eslint-disable-next-line react-hooks/set-state-in-effect    
-        setWeeklyData(JSON.parse(savedData));
-        return;
-      } catch (e) {
-        console.error("Failed to parse saved wisdom garden data", e);
-      }
-    }
-
-    // Fallback to Mock Data
-    const data = WEEKLY_MOCK_DATA.find(d => d.weekNumber === selectedWeek);
-    if (data) {
-      // Deep copy to avoid mutating the original mock data
-      setWeeklyData(JSON.parse(JSON.stringify(data)));
-    }
-  }, [selectedWeek]);
-
-  // Helper to save data
-  const persistData = (week: number, data: WeeklyData) => {
-    localStorage.setItem(`wisdom_garden_week_${week}`, JSON.stringify(data));
-  };
-
-  const handleCheckItem = (itemId: string) => {
-    if (!weeklyData) return;
-
-    let scoreChange = 0;
-
-    // Create a new categories array with the updated item (immutable update)
-    const newCategories = weeklyData.categories.map(category => ({
-      ...category,
-      items: category.items.map(item => {
-        if (item.id === itemId) {
-          const newIsCompleted = !item.isCompleted;
-          scoreChange = newIsCompleted ? item.points : -item.points;
-          return { ...item, isCompleted: newIsCompleted };
-        }
-        return item;
-      }),
-    }));
-
-    // Create the new state object
-    const newData = {
-      ...weeklyData,
-      categories: newCategories,
-      currentScore: weeklyData.currentScore + scoreChange,
-    };
-
-    persistData(selectedWeek, newData);
-    setWeeklyData(newData);
-  };
-
-  if (!weeklyData) return <div className="p-8 text-center text-text-secondary">Loading...</div>;
+  if (isLoading || !weeklyData) {
+    return (
+      <div className="flex items-center justify-center min-h-screen text-text-secondary">
+        Loading...
+      </div>
+    );
+  }
 
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="container-mobile py-6 min-h-screen"
+      className="container-mobile py-6 min-h-screen relative pb-24"
     >
       <AppHeader
         selectedWeek={selectedWeek}
@@ -87,10 +37,28 @@ export default function WisdomGardenScreen() {
         maxScore={weeklyData.maxScore}
       />
 
-      <PracticeChecklist
-        categories={weeklyData.categories}
-        onCheckItem={handleCheckItem}
-      />
+      {/* Navigation to Practice Room */}
+      <div className="px-4 mt-8 mb-6">
+        <Link href="/weekly-practices">
+          <button className="w-full bg-primary text-white py-4 rounded-xl font-semibold shadow-lg hover:bg-primary/90 transition-all flex items-center justify-center space-x-2">
+            <span>Go to Practice Room</span>
+            <ArrowRight className="w-5 h-5" />
+          </button>
+        </Link>
+      </div>
+
+      <div className="mt-8">
+        <h3 className="text-lg font-semibold text-text-primary px-4 mb-2 opacity-80">
+          Weekly Check-in Summary
+        </h3>
+        <div className="opacity-80 pointer-events-none">
+          <PracticeChecklist
+            categories={weeklyData.categories}
+            onCheckItem={() => { }} // No-op for read-only
+            readOnly={true}
+          />
+        </div>
+      </div>
     </motion.div>
   );
 }
