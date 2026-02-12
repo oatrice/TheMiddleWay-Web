@@ -1,0 +1,68 @@
+name: Vercel Preview Deployment
+
+on:
+  push:
+    branches:
+      - 'feat/**'
+      - 'fix/**'
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  deploy-preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Pull Vercel Environment Information
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build Project Artifacts
+        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy Project Artifacts to Vercel
+        id: deploy
+        run: |
+          DEPLOYMENT_URL=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
+          echo "deployment_url=$DEPLOYMENT_URL" >> $GITHUB_OUTPUT
+
+      - name: Generate Branch Alias
+        id: alias-gen
+        run: |
+          # Convert branch name to URL-safe string
+          # removing 'refs/heads/' and replacing '/' with '-'
+          BRANCH_NAME=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}
+          SAFE_BRANCH_NAME=$(echo "$BRANCH_NAME" | tr '/' '-' | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9-]//g')
+          
+          # Construct alias: the-middle-way-<branch>.vercel.app
+          ALIAS="the-middle-way-${SAFE_BRANCH_NAME}.vercel.app"
+          echo "alias=$ALIAS" >> $GITHUB_OUTPUT
+
+      - name: Assign Domain Alias
+        run: |
+          vercel alias set ${{ steps.deploy.outputs.deployment_url }} ${{ steps.alias-gen.outputs.alias }} --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: thollander/actions-comment-pull-request@v2
+        with:
+          message: |
+            ### 🚀 Preview Deployment Ready!
+            
+            | Type | URL |
+            |------|-----|
+            | **Preview** | [${{ steps.deploy.outputs.deployment_url }}](${{ steps.deploy.outputs.deployment_url }}) |
+            | **Stable Branch Alias** | [https://${{ steps.alias-gen.outputs.alias }}](https://${{ steps.alias-gen.outputs.alias }}) |
+            
+            *The Stable Branch Alias updates automatically with every push.*

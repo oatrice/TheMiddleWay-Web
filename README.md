@@ -35,6 +35,7 @@ app/
 ├── page.tsx            # Dashboard/Home page
 ├── library/page.tsx    # Library page
 ├── courses/page.tsx    # Courses page
+├── weekly-practices/page.tsx # Weekly practices page
 ├── profile/page.tsx    # Profile page
 ├── admin/content/page.tsx # Content management (CSV upload)
 └── globals.css         # Global styles & design tokens
