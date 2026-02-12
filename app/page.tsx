@@ -24,19 +24,28 @@ export default function WisdomGardenScreen() {
   const handleCheckItem = (itemId: string) => {
     if (!weeklyData) return;
 
-    const newData = { ...weeklyData };
     let scoreChange = 0;
 
-    newData.categories.forEach(cat => {
-      cat.items.forEach(item => {
+    // Create a new categories array with the updated item (immutable update)
+    const newCategories = weeklyData.categories.map(category => ({
+      ...category,
+      items: category.items.map(item => {
         if (item.id === itemId) {
-          item.isCompleted = !item.isCompleted;
-          scoreChange = item.isCompleted ? item.points : -item.points;
+          const newIsCompleted = !item.isCompleted;
+          scoreChange = newIsCompleted ? item.points : -item.points;
+          return { ...item, isCompleted: newIsCompleted };
         }
-      });
-    });
+        return item;
+      }),
+    }));
 
-    newData.currentScore += scoreChange;
+    // Create the new state object
+    const newData = {
+      ...weeklyData,
+      categories: newCategories,
+      currentScore: weeklyData.currentScore + scoreChange,
+    };
+
     setWeeklyData(newData);
   };
 
