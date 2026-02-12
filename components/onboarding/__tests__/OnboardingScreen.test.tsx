@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { OnboardingScreen } from '../OnboardingScreen';
 import '@testing-library/jest-dom';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
@@ -7,6 +7,7 @@ import { vi, describe, it, expect, beforeEach } from 'vitest';
 // Mock next/image
 vi.mock('next/image', () => ({
     __esModule: true,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     default: (props: any) => {
         // eslint-disable-next-line @next/next/no-img-element
         return <img {...props} alt={props.alt} />;
