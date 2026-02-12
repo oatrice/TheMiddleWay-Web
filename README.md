@@ -40,7 +40,8 @@ app/
 ├── admin/content/page.tsx # Content management (CSV upload)
 └── globals.css         # Global styles & design tokens
 components/
-└── MobileNavigation.tsx  # Bottom navigation bar
+├── onboarding/OnboardingScreen.tsx # Multi-step new user onboarding
+└── MobileNavigation.tsx          # Bottom navigation bar
 ```
 
 ## Getting Started

@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.7.0] - 2026-02-12
+
+### Added
+
+- Introduced a multi-step onboarding flow to guide new users through the app's core features and concepts upon their first visit.
+
+### Fixed
+
+- Resolved an issue with toast notifications where the dismiss timer was not functioning reliably.
+
 ## [0.6.0] - 2026-02-12
 
 ### Added
