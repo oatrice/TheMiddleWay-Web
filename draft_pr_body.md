@@ -1,47 +1,50 @@
-Closes: [Link to Issue #5]
+Closes: https://github.com/owner/repo/issues/1
 
 ### Summary
 
-This pull request introduces a comprehensive system for ingesting weekly content via CSV file uploads. It resolves the need for a scalable method to manage the 8-week content plan across 11 distinct categories.
+This pull request introduces the "Wisdom Garden" dashboard, the application's core feature. This new, interactive page serves as the user's primary interface for tracking their daily spiritual practices. It replaces the previous static homepage with a dynamic experience that visualizes progress and provides a clear checklist of weekly tasks, as outlined in the issue.
 
-The implementation includes a new **Admin Content Management UI**, seamless integration with a **Go backend API** for robust processing, and significant **CI/CD enhancements** for automated versioning and deployments. The core CSV parsing and validation logic was intentionally migrated from the frontend to the backend to improve performance, security, and maintain a clear separation of concerns.
+The dashboard is designed to be a calming and motivating space where users can see the tangible results of their efforts, represented by a progress score that will later evolve into a growing "Wisdom Tree."
 
-### Key Changes & Implementation Details
+### Key Changes
 
-1.  **Admin Content Management UI (`/admin/content`)**
-    *   A new page has been created to serve as the central hub for content management.
-    *   A user-friendly `CsvUploadForm` component provides a clear interface for file selection and displays real-time feedback.
-    *   The UI includes explicit instructions on the required CSV format:
-        *   **Headers:** `Week, Category, Title, Content`
-        *   **Week:** A number from 1 to 8.
-        *   **Category:** Must be an exact, case-sensitive match to one of the 11 predefined categories.
+*   **New Wisdom Garden Dashboard (`app/page.tsx`)**
+    *   The root page is now the main Wisdom Garden screen, orchestrating all new components.
+    *   State management is handled using `useState` and `useEffect` to load and manage the data for the selected week.
 
-2.  **Backend Integration & Logic Migration**
-    *   The primary responsibility for parsing, validating, and storing CSV data has been delegated to a dedicated Go backend service.
-    *   A new frontend service, `contentService.ts`, handles the file upload by sending a `POST` request to the `/api/v1/content/upload` endpoint.
-    *   This service is responsible for interpreting the API's JSON response, displaying either a success message with the count of ingested items or a detailed list of validation errors.
+*   **Component-Based Architecture**
+    *   **`AppHeader`**: A new header containing the page title, theme toggle, and the `WeekSelector`.
+    *   **`WeekSelector`**: Allows users to navigate between the 8 weeks of the program.
+    *   **`WisdomGardenVisualization`**: Displays the user's current score and max score for the week, providing immediate visual feedback.
+    *   **`PracticeChecklist` & `PracticeCard`**: Renders a categorized list of practices. The cards are interactive, with smooth animations and visual state changes upon completion.
 
-3.  **Data Validation & Constants**
-    *   The backend now enforces strict validation rules for each row in the CSV, ensuring data integrity.
-    *   A new constant file, `lib/constants/categories.ts`, was added to the frontend to define the 11 valid content categories, ensuring consistency.
+*   **State Persistence with `localStorage`**
+    *   User progress (i.e., checked items) is automatically saved to the browser's `localStorage`.
+    *   This ensures that a user's progress is preserved across sessions and page reloads, providing a seamless and reliable experience.
 
-4.  **CI/CD Enhancements**
-    *   **Auto-Tag Workflow (`auto-tag.yml`):** Automatically creates and pushes a new Git tag whenever the `version` field in `package.json` is updated, streamlining the release process.
-    *   **Vercel Version Alias (`vercel-version-alias.yml`):** Creates a unique, immutable Vercel deployment URL based on the Git tag (e.g., `my-app-v1-2-3.vercel.app`). This provides stable links for testing and reviewing specific versions.
+*   **Data Structure & Types**
+    *   `lib/data/wisdom-garden-data.ts`: Mock data has been created to simulate the 8-week practice program.
+    *   `lib/types/wisdom-garden.ts`: Clear TypeScript types have been defined for all data structures related to the feature.
 
-5.  **Testing & Code Quality**
-    *   Unit tests have been added for the new `contentService` to verify its interaction with the backend API, including success and error handling.
-    *   The implementation incorporates feedback from a code review, leading to improved logic and script reliability.
+*   **Technical Refinements**
+    *   **Immutable State Updates**: The checklist handler (`handleCheckItem`) was implemented to use an immutable update pattern, ensuring predictable state changes and preventing side effects.
+    *   **`ThemeProvider` Refactor**: Optimized the theme provider to better synchronize the theme state between the UI and persistent storage.
+
+### Screencast
+
+*A short demo of the new dashboard in action.*
+
+https://github.com/user-attachments/assets/b8321a57-0a9c-4f51-b841-591e6005d5e5
 
 ### How to Test
 
-1.  Navigate to the new admin page at `/admin/content`.
-2.  **Test the Happy Path:**
-    *   Create a CSV file with valid data (e.g., `Week` between 1-8, `Category` from the approved list).
-    *   Click "Select CSV File" and upload it.
-    *   **Expected:** A success message appears, indicating the number of content items processed by the backend.
-3.  **Test Validation Errors:**
-    *   Create a CSV file with invalid data (e.g., a row with `Week: 9`, another with `Category: Health`, a missing `Title` header).
-    *   Upload the invalid file.
-    *   **Expected:** A validation error message appears, listing each error with its corresponding row number and a descriptive message (e.g., "Row 2: Week must be between 1 and 8").
-4.  Verify the network request in your browser's developer tools to see the `POST` request to the backend and the JSON response.
+1.  Navigate to the homepage (`/`).
+2.  The "Wisdom Garden" dashboard should be displayed.
+3.  Click on any practice item in the checklist.
+    *   **Expected:** The item marks as complete, its appearance changes, and the score at the top updates instantly.
+4.  Click the same item again to uncheck it.
+    *   **Expected:** The item returns to its original state, and the score decreases.
+5.  Use the week selector at the top to switch to a different week (e.g., Week 2).
+    *   **Expected:** The checklist and score update to reflect the data for the selected week.
+6.  Check a few items, then refresh the browser page.
+    *   **Expected:** The items you checked should remain checked, confirming that the state was persisted correctly in `localStorage`.

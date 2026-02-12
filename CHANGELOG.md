@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.5.0] - 2026-02-12
+
+### Added
+
+- Implemented the 'Wisdom Garden' feature on the homepage, a new interactive interface for tracking weekly practices. This includes a dynamic progress visualization, practice cards, a checklist, and a week selector.
+
+### Changed
+
+- Refactored the homepage and `ThemeProvider` for improved performance, cleaner state management, and better code maintainability.
+- Optimized theme context actions to prevent unnecessary re-renders.
+
+### Fixed
+
+- Corrected a state management bug in the Wisdom Garden checklist to ensure that checking or unchecking a practice is always reflected accurately in the UI.
+
 ## [0.4.0] - 2026-02-11
 
 ### Added
