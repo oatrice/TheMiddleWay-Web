@@ -6,7 +6,7 @@ interface WeekSelectorProps {
     currentWeek?: number; // Optional: to highlight actual current week
 }
 
-export const WeekSelector: React.FC<WeekSelectorProps> = ({ selectedWeek, onSelectWeek, currentWeek = 1 }) => {
+export const WeekSelector: React.FC<WeekSelectorProps> = ({ selectedWeek, onSelectWeek }) => {
     const weeks = Array.from({ length: 8 }, (_, i) => i + 1);
 
     return (

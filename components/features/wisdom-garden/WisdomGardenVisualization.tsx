@@ -6,6 +6,18 @@ interface WisdomGardenVisualizationProps {
     maxScore: number;
 }
 
+// Placeholder SVGs for tree stages - using reliable emojis/simple shapes for mock
+const TreeStage: React.FC<{ stage: number }> = ({ stage }) => {
+    switch (stage) {
+        case 0: return <span className="text-6xl">🌱</span>; // Seedling
+        case 1: return <span className="text-7xl">🌿</span>; // Small plant
+        case 2: return <span className="text-8xl">🪴</span>; // Potted plant
+        case 3: return <span className="text-9xl">🌳</span>; // Young tree
+        case 4: return <span className="text-9xl">🌸</span>; // Blooming tree
+        default: return <span className="text-6xl">🌱</span>;
+    }
+};
+
 export const WisdomGardenVisualization: React.FC<WisdomGardenVisualizationProps> = ({ score, maxScore }) => {
     const percentage = Math.min((score / maxScore) * 100, 100);
 
@@ -15,18 +27,6 @@ export const WisdomGardenVisualization: React.FC<WisdomGardenVisualizationProps>
     else if (percentage > 60) stage = 3;
     else if (percentage > 40) stage = 2;
     else if (percentage > 20) stage = 1;
-
-    // Placeholder SVGs for tree stages - using reliable emojis/simple shapes for mock
-    const TreeStage = () => {
-        switch (stage) {
-            case 0: return <span className="text-6xl">🌱</span>; // Seedling
-            case 1: return <span className="text-7xl">🌿</span>; // Small plant
-            case 2: return <span className="text-8xl">🪴</span>; // Potted plant
-            case 3: return <span className="text-9xl">🌳</span>; // Young tree
-            case 4: return <span className="text-9xl">🌸</span>; // Blooming tree
-            default: return <span className="text-6xl">🌱</span>;
-        }
-    };
 
     return (
         <div className="bg-surface/50 border border-border/30 backdrop-blur-sm rounded-card p-8 mb-8 flex flex-col items-center justify-center relative overflow-hidden h-64">
@@ -40,7 +40,7 @@ export const WisdomGardenVisualization: React.FC<WisdomGardenVisualizationProps>
                 transition={{ type: "spring", stiffness: 200, damping: 15 }}
                 className="mb-4 z-10"
             >
-                <TreeStage />
+                <TreeStage stage={stage} />
             </motion.div>
 
             <div className="z-10 text-center">

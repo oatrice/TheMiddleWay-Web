@@ -19,6 +19,7 @@ export default function WisdomGardenScreen() {
 
     if (savedData) {
       try {
+        // eslint-disable-next-line react-hooks/set-state-in-effect    
         setWeeklyData(JSON.parse(savedData));
         return;
       } catch (e) {
