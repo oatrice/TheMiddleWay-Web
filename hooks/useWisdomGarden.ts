@@ -5,15 +5,22 @@ import { WEEKLY_MOCK_DATA } from "@/lib/data/wisdom-garden-data";
 import { togglePracticeItem } from "@/lib/logic/wisdom-garden";
 
 export function useWisdomGarden() {
-    const [selectedWeek, setSelectedWeek] = useState(1);
+    const [selectedWeek, setSelectedWeekState] = useState(1);
     const [weeklyData, setWeeklyData] = useState<WeeklyData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    // Load data
-    useEffect(() => {
-        let isMounted = true;
+    const setSelectedWeek = useCallback((week: number) => {
+        if (week === selectedWeek) return;
+        setSelectedWeekState(week);
+        setIsLoading(true);
+    }, [selectedWeek]);
 
-        const load = async () => {
+    // Load data effect
+    useEffect(() => {
+        // We don't set isLoading(true) here to avoid "setState in effect" warning.
+        // It is handled in setSelectedWeek or initial state.
+
+        const load = () => {
             // Try to load from localStorage first
             const storageKey = `wisdom_garden_week_${selectedWeek}`;
             const savedData = localStorage.getItem(storageKey);
@@ -21,10 +28,8 @@ export function useWisdomGarden() {
             if (savedData) {
                 try {
                     const parsed = JSON.parse(savedData);
-                    if (isMounted) {
-                        setWeeklyData(parsed);
-                        setIsLoading(false);
-                    }
+                    setWeeklyData(parsed);
+                    setIsLoading(false);
                     return;
                 } catch (e) {
                     console.error("Failed to parse saved wisdom garden data", e);
@@ -33,45 +38,15 @@ export function useWisdomGarden() {
 
             // Fallback to Mock Data
             const data = WEEKLY_MOCK_DATA.find((d) => d.weekNumber === selectedWeek);
-            if (data && isMounted) {
+            if (data) {
                 // Deep copy to avoid mutating the original mock data
                 setWeeklyData(JSON.parse(JSON.stringify(data)));
-                setIsLoading(false);
             }
+            setIsLoading(false);
         };
 
-        if (isLoading) { // Only trigger load if loading state is active or week changed impacting it
-            load();
-        } else {
-            // If selectedWeek changes, we should reload, so reset loading
-            setIsLoading(true);
-        }
-    }, [selectedWeek]); // Dependency on isLoading might cause loops, better to handle week change
-
-    // Better approach: Effect on selectedWeek to trigger load
-    useEffect(() => {
-        setIsLoading(true);
-        // The actual load will happen in the next render cycle or immediately following
-        // But setState inside effect is the issue.
-        // Actually, we can just load synchronous data directly if it's local storage/mock.
-
-        const storageKey = `wisdom_garden_week_${selectedWeek}`;
-        const savedData = localStorage.getItem(storageKey);
-
-        let dataToSet = null;
-        if (savedData) {
-            try {
-                dataToSet = JSON.parse(savedData);
-            } catch { }
-        }
-
-        if (!dataToSet) {
-            const mock = WEEKLY_MOCK_DATA.find((d) => d.weekNumber === selectedWeek);
-            if (mock) dataToSet = JSON.parse(JSON.stringify(mock));
-        }
-
-        setWeeklyData(dataToSet);
-        setIsLoading(false);
+        // Run load immediatley
+        load();
     }, [selectedWeek]);
 
     // Persist data helper
