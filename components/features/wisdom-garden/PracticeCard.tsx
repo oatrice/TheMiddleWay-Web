@@ -7,9 +7,10 @@ interface PracticeCardProps {
     item: PracticeItem;
     onCheck: (id: string) => void;
     readOnly?: boolean;
+    onWarnReadOnly?: () => void;
 }
 
-export const PracticeCard: React.FC<PracticeCardProps> = ({ item, onCheck, readOnly = false }) => {
+export const PracticeCard: React.FC<PracticeCardProps> = ({ item, onCheck, readOnly = false, onWarnReadOnly }) => {
     return (
         <motion.div
             layout
@@ -21,9 +22,9 @@ export const PracticeCard: React.FC<PracticeCardProps> = ({ item, onCheck, readO
                     ? 'bg-primary/5 border-primary/20'
                     : 'bg-surface border-border/30 hover:border-primary/30 hover:shadow-sm'
                 }
-        ${readOnly ? 'cursor-default pointer-events-none opacity-80' : 'cursor-pointer'}
+        ${readOnly ? 'cursor-not-allowed opacity-80' : 'cursor-pointer'}
       `}
-            onClick={() => !readOnly && onCheck(item.id)}
+            onClick={() => readOnly ? onWarnReadOnly?.() : onCheck(item.id)}
         >
             <div className="flex-1">
                 <h3 className={`font-medium transition-colors ${item.isCompleted ? 'text-text-secondary line-through' : 'text-text-primary'}`}>

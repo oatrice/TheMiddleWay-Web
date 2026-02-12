@@ -1,17 +1,23 @@
 
 "use client";
 
-import React from "react";
-import { motion } from "framer-motion";
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { AppHeader } from "@/components/features/wisdom-garden/AppHeader";
 import { WisdomGardenVisualization } from "@/components/features/wisdom-garden/WisdomGardenVisualization";
 import { PracticeChecklist } from "@/components/features/wisdom-garden/PracticeChecklist";
 import { useWisdomGarden } from "@/hooks/useWisdomGarden";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Info } from "lucide-react";
 
 export default function WisdomGardenScreen() {
   const { selectedWeek, setSelectedWeek, weeklyData, isLoading } = useWisdomGarden();
+  const [showToast, setShowToast] = useState(false);
+
+  const handleReadOnlyClick = () => {
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 3000);
+  };
 
   if (isLoading || !weeklyData) {
     return (
@@ -51,14 +57,30 @@ export default function WisdomGardenScreen() {
         <h3 className="text-lg font-semibold text-text-primary px-4 mb-2 opacity-80">
           Weekly Check-in Summary
         </h3>
-        <div className="opacity-80 pointer-events-none">
+        <div className="opacity-80">
           <PracticeChecklist
             categories={weeklyData.categories}
             onCheckItem={() => { }} // No-op for read-only
             readOnly={true}
+            onWarnReadOnly={handleReadOnlyClick}
           />
         </div>
       </div>
+
+      {/* Toast Notification */}
+      <AnimatePresence>
+        {showToast && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="fixed bottom-24 left-4 right-4 bg-gray-800 text-white px-4 py-3 rounded-xl shadow-lg flex items-center space-x-3 z-50"
+          >
+            <Info className="w-5 h-5 text-blue-400" />
+            <p className="text-sm font-medium">Please go to "Practice Room" to check-in.</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
