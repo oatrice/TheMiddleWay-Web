@@ -11,27 +11,66 @@ export function useWisdomGarden() {
 
     // Load data
     useEffect(() => {
+        let isMounted = true;
+
+        const load = async () => {
+            // Try to load from localStorage first
+            const storageKey = `wisdom_garden_week_${selectedWeek}`;
+            const savedData = localStorage.getItem(storageKey);
+
+            if (savedData) {
+                try {
+                    const parsed = JSON.parse(savedData);
+                    if (isMounted) {
+                        setWeeklyData(parsed);
+                        setIsLoading(false);
+                    }
+                    return;
+                } catch (e) {
+                    console.error("Failed to parse saved wisdom garden data", e);
+                }
+            }
+
+            // Fallback to Mock Data
+            const data = WEEKLY_MOCK_DATA.find((d) => d.weekNumber === selectedWeek);
+            if (data && isMounted) {
+                // Deep copy to avoid mutating the original mock data
+                setWeeklyData(JSON.parse(JSON.stringify(data)));
+                setIsLoading(false);
+            }
+        };
+
+        if (isLoading) { // Only trigger load if loading state is active or week changed impacting it
+            load();
+        } else {
+            // If selectedWeek changes, we should reload, so reset loading
+            setIsLoading(true);
+        }
+    }, [selectedWeek]); // Dependency on isLoading might cause loops, better to handle week change
+
+    // Better approach: Effect on selectedWeek to trigger load
+    useEffect(() => {
         setIsLoading(true);
-        // Try to load from localStorage first
+        // The actual load will happen in the next render cycle or immediately following
+        // But setState inside effect is the issue.
+        // Actually, we can just load synchronous data directly if it's local storage/mock.
+
         const storageKey = `wisdom_garden_week_${selectedWeek}`;
         const savedData = localStorage.getItem(storageKey);
 
+        let dataToSet = null;
         if (savedData) {
             try {
-                setWeeklyData(JSON.parse(savedData));
-                setIsLoading(false);
-                return;
-            } catch (e) {
-                console.error("Failed to parse saved wisdom garden data", e);
-            }
+                dataToSet = JSON.parse(savedData);
+            } catch { }
         }
 
-        // Fallback to Mock Data
-        const data = WEEKLY_MOCK_DATA.find((d) => d.weekNumber === selectedWeek);
-        if (data) {
-            // Deep copy to avoid mutating the original mock data
-            setWeeklyData(JSON.parse(JSON.stringify(data)));
+        if (!dataToSet) {
+            const mock = WEEKLY_MOCK_DATA.find((d) => d.weekNumber === selectedWeek);
+            if (mock) dataToSet = JSON.parse(JSON.stringify(mock));
         }
+
+        setWeeklyData(dataToSet);
         setIsLoading(false);
     }, [selectedWeek]);
 

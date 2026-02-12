@@ -77,7 +77,7 @@ export default function WisdomGardenScreen() {
             className="fixed bottom-24 left-4 right-4 bg-gray-800 text-white px-4 py-3 rounded-xl shadow-lg flex items-center space-x-3 z-50"
           >
             <Info className="w-5 h-5 text-blue-400" />
-            <p className="text-sm font-medium">Please go to "Practice Room" to check-in.</p>
+            <p className="text-sm font-medium">Please go to &quot;Practice Room&quot; to check-in.</p>
           </motion.div>
         )}
       </AnimatePresence>
