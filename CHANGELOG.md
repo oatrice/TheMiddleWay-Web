@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.6.0] - 2026-02-12
+
+### Added
+
+- Introduced a new "Weekly Practices" page to provide a comprehensive view of all available practices.
+- Added toast notifications to the Wisdom Garden to inform users when they attempt to interact with a read-only checklist.
+- Implemented a CI workflow to automatically generate preview deployments on Vercel for each pull request, improving the development and review process.
+
+### Changed
+
+- Refactored Wisdom Garden state management into a dedicated `useWisdomGarden` hook for improved code structure and reusability.
+
 ## [0.5.0] - 2026-02-12
 
 ### Added
